@@ -186,4 +186,6 @@ MIT License - Free for personal and commercial use.
 
 [Documentation](./_docs/README.md) · [API Docs](http://localhost:3000/api/docs) · [Report Bug](https://github.com/rmyndharis/OpenWA/issues)
 
-</div>
+<p align="center">
+  Made with ❤️ by Yudhi Armyndharis and the OpenWA Community
+</p>
