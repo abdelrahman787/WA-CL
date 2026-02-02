@@ -1,103 +1,189 @@
 # OpenWA - Open Source WhatsApp API Gateway
 
-<p align="center">
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
-  <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg" alt="Node.js Version">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
-</p>
+> 🚀 Free, Open Source, Self-Hosted WhatsApp HTTP API
 
-**OpenWA** is a free, self-hosted WhatsApp HTTP API gateway that enables developers to integrate WhatsApp messaging capabilities into their applications through a simple REST API.
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Node](https://img.shields.io/badge/node-20_LTS-brightgreen.svg)
+![NestJS](https://img.shields.io/badge/NestJS-11.x-red.svg)
+![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
-## ✨ Features
+## 🎯 Features
 
-- 🚀 **Simple REST API** - Easy-to-use HTTP endpoints for sending messages
-- 📱 **Multi-Session Support** - Manage multiple WhatsApp sessions
-- 🔄 **Webhook Callbacks** - Real-time notifications for incoming messages
-- 🔐 **Secure by Design** - API key authentication and encryption
-- 📊 **Dashboard** - Web-based admin panel for session management
-- 🐳 **Docker Ready** - Easy deployment with Docker & Docker Compose
+**OpenWA** is an open-source alternative to WAHA that provides:
 
-## 📋 Requirements
+| Feature | Status |
+|---------|--------|
+| REST API for WhatsApp | ✅ Ready |
+| Multi-session Support | ✅ Ready |
+| Webhook with HMAC Signature | ✅ Ready |
+| SQLite Storage | ✅ Ready |
+| Docker Support | ✅ Ready |
+| Swagger API Docs | ✅ Ready |
+| Health Check Endpoints | ✅ Ready |
+| Web Dashboard | 📝 Phase 2 |
+| PostgreSQL Support | 📝 Phase 2 |
+| API Key Authentication | � Phase 2 |
+| Rate Limiting | 📝 Phase 2 |
+| Prometheus Metrics | 📝 Phase 3 |
 
-- Node.js 20 LTS or higher
-- npm 10+
-- Docker & Docker Compose (optional, for containerized deployment)
+## � Quick Start
 
-## 🚀 Quick Start
+### Option A: Minimal Setup (SQLite, no Docker)
 
 ```bash
 # Clone repository
 git clone https://github.com/rmyndharis/OpenWA.git
-cd openwa
+cd OpenWA
 
-# Install dependencies
+# Install & configure
 npm install
+cp .env.minimal .env
 
-# Copy environment file
-cp .env.example .env
+# Create data directory
+mkdir -p data/sessions data/media
 
-# Start infrastructure services (optional for development)
-docker compose up -d postgres redis
-
-# Run database migrations
-npm run migration:run
-
-# Start development server
+# Run
 npm run start:dev
+
+# Access
+# API: http://localhost:3000/api
+# Swagger: http://localhost:3000/api/docs
+# Health: http://localhost:3000/api/health
 ```
+
+### Option B: Docker Deployment
+
+```bash
+# Clone repository
+git clone https://github.com/rmyndharis/OpenWA.git
+cd OpenWA
+
+# Build and run
+docker compose up -d
+
+# Access
+# API: http://localhost:3000/api
+# Swagger: http://localhost:3000/api/docs
+```
+
+## 📡 API Examples
+
+### Create a Session
+
+```bash
+curl -X POST http://localhost:3000/api/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-bot"}'
+
+# Response:
+# {
+#   "success": true,
+#   "data": {
+#     "id": "uuid...",
+#     "name": "my-bot",
+#     "status": "created"
+#   }
+# }
+```
+
+### Start Session & Get QR Code
+
+```bash
+# Start the session
+curl -X POST http://localhost:3000/api/sessions/{sessionId}/start
+
+# Get QR code (scan with WhatsApp)
+curl http://localhost:3000/api/sessions/{sessionId}/qr
+
+# Response contains base64 QR code image
+```
+
+### Send a Message
+
+```bash
+curl -X POST http://localhost:3000/api/sessions/{sessionId}/messages/send-text \
+  -H "Content-Type: application/json" \
+  -d '{
+    "chatId": "628123456789@c.us",
+    "text": "Hello from OpenWA!"
+  }'
+```
+
+### Setup Webhook
+
+```bash
+curl -X POST http://localhost:3000/api/sessions/{sessionId}/webhooks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-server.com/webhook",
+    "events": ["message.received", "session.status"],
+    "secret": "your-hmac-secret"
+  }'
+```
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Runtime** | Node.js 20 LTS |
+| **Framework** | NestJS 11.x |
+| **Language** | TypeScript 5.x |
+| **WA Engine** | whatsapp-web.js |
+| **Database** | SQLite (default) / PostgreSQL |
+| **ORM** | TypeORM |
+| **Container** | Docker |
 
 ## 📁 Project Structure
 
 ```
 openwa/
-├── src/                    # Source code
-│   ├── common/             # Shared utilities
-│   ├── config/             # Configuration
-│   ├── modules/            # Feature modules
-│   ├── engine/             # WhatsApp engine
-│   ├── queue/              # Job queues
-│   └── database/           # Database
-├── test/                   # Tests
-├── dashboard/              # Frontend dashboard
-├── docs/                   # Documentation
-├── docker/                 # Docker files
-└── _docs/                  # Planning documentation
+├── src/
+│   ├── main.ts                 # Application entry point
+│   ├── app.module.ts           # Root module
+│   ├── config/                 # Configuration
+│   ├── common/                 # Shared utilities
+│   ├── engine/                 # WhatsApp engine abstraction
+│   └── modules/
+│       ├── session/            # Session management
+│       ├── message/            # Message handling
+│       ├── webhook/            # Webhook management
+│       └── health/             # Health checks
+├── _docs/                      # Documentation
+├── docker-compose.yml
+├── Dockerfile
+└── package.json
 ```
 
 ## 📚 Documentation
 
-Detailed documentation is available in the `_docs/` directory:
+See the `_docs/` folder for complete documentation:
 
+- [Project Overview](./_docs/01-project-overview.md)
 - [Requirements Specification](./_docs/02-requirements-specification.md)
-- [API Specification](./_docs/03-api-specification.md)
-- [System Architecture](./_docs/04-system-architecture.md)
+- [System Architecture](./_docs/03-system-architecture.md)
+- [API Specification](./_docs/04-api-specification.md)
 - [Database Design](./_docs/05-database-design.md)
-- [Security Design](./_docs/06-security-design.md)
-- [DevOps & Infrastructure](./_docs/07-devops-infrastructure.md)
-- [Development Guidelines](./_docs/08-development-guidelines.md)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
-
 1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Make changes following our [development guidelines](./_docs/08-development-guidelines.md)
-4. Write/update tests
-5. Commit: `git commit -m 'feat(scope): add amazing feature'`
-6. Push: `git push origin feature/amazing-feature`
-7. Open Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+See [Development Guidelines](./_docs/08-development-guidelines.md) for coding standards.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## ⚠️ Disclaimer
-
-This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp or any of its subsidiaries or affiliates. Use at your own risk.
+MIT License - Free for personal and commercial use.
 
 ---
 
-<p align="center">
-  Made with ❤️ by the OpenWA Community
-</p>
+<div align="center">
+
+**OpenWA** - Free, Open Source WhatsApp API Gateway
+
+[Documentation](./_docs/README.md) · [API Docs](http://localhost:3000/api/docs) · [Report Bug](https://github.com/rmyndharis/OpenWA/issues)
+
+</div>

@@ -1,0 +1,95 @@
+# OpenWA - Docker Compose Configuration
+# Development and production deployment
+
+services:
+  # ===== OpenWA Application =====
+  openwa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openwa
+    restart: unless-stopped
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - DATABASE_TYPE=${DATABASE_TYPE:-sqlite}
+      - DATABASE_NAME=/app/data/openwa.sqlite
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-openwa}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-openwa}
+      - DATABASE_SYNCHRONIZE=${DATABASE_SYNCHRONIZE:-false}
+      - ENGINE_TYPE=whatsapp-web.js
+      - SESSION_DATA_PATH=/app/data/sessions
+      - PUPPETEER_HEADLESS=true
+      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/data/media
+      - WEBHOOK_TIMEOUT=10000
+      - WEBHOOK_MAX_RETRIES=3
+      - API_MASTER_KEY=${API_MASTER_KEY:-}
+    volumes:
+      - openwa-data:/app/data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # Uncomment if using PostgreSQL
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
+
+  # ===== PostgreSQL (for production) =====
+  # Uncomment for PostgreSQL support
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: openwa-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: ${DATABASE_USERNAME:-openwa}
+  #     POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-openwa}
+  #     POSTGRES_DB: ${DATABASE_NAME:-openwa}
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-openwa}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # ===== Redis (for Phase 2 - queue and caching) =====
+  # Uncomment for Redis support
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: openwa-redis
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - redis-data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  openwa-data:
+    driver: local
+  # postgres-data:
+  #   driver: local
+  # redis-data:
+  #   driver: local
+
+networks:
+  default:
+    name: openwa-network

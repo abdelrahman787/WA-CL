@@ -1,0 +1,31 @@
+# OpenWA - Docker Compose for Development
+# Run with: docker compose -f docker-compose.dev.yml up --build
+
+services:
+  openwa:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: openwa-dev
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_TYPE=sqlite
+      - DATABASE_NAME=/app/data/openwa.sqlite
+      - DATABASE_SYNCHRONIZE=true
+      - ENGINE_TYPE=whatsapp-web.js
+      - SESSION_DATA_PATH=/app/data/sessions
+      - PUPPETEER_HEADLESS=true
+      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/data/media
+      - WEBHOOK_TIMEOUT=10000
+      - WEBHOOK_MAX_RETRIES=3
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+volumes:
+  openwa-data:
