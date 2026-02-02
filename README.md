@@ -99,5 +99,5 @@ This project is not affiliated, associated, authorized, endorsed by, or in any w
 ---
 
 <p align="center">
-  Made with ❤️ by the OpenWA Community
+  Made with ❤️ by Yudhi Armyndharis and the OpenWA Community
 </p>
