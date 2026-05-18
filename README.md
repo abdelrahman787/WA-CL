@@ -97,46 +97,43 @@ Built on a **pluggable architecture**, OpenWA lets you swap database engines (SQ
 
 ### Option A: Docker Hub — Pre-built Images (Fastest)
 
-No need to clone or build. Pull the images directly from Docker Hub:
+No need to clone or build. Three commands and you're running:
 
 ```bash
-# Create a project folder
+# 1. Create a project folder
 mkdir openwa && cd openwa
 
-# Download the compose file
+# 2. Download the compose file and default config
 curl -o docker-compose.hub.yml https://raw.githubusercontent.com/3bsalam-1/OpenWA/main/docker-compose.hub.yml
+curl -o .env https://raw.githubusercontent.com/3bsalam-1/OpenWA/main/.env.example
 
-# Start
+# 3. (Optional) Edit .env to customise ports, database, storage, etc.
+#    nano .env
+
+# 4. Start
 docker compose -f docker-compose.hub.yml up -d
 ```
 
-Or run manually with `docker run`:
+Once running:
+
+| URL | Description |
+| --- | --- |
+| `http://localhost:2886` | Dashboard |
+| `http://localhost:2785/api` | REST API |
+| `http://localhost:2785/api/docs` | Swagger docs |
+
+The API key is printed in the container logs on first boot:
 
 ```bash
-# API
-docker run -d \
-  --name openwa-api \
-  -p 127.0.0.1:2785:2785 \
-  -e DATABASE_TYPE=sqlite \
-  -e DATABASE_NAME=/app/data/openwa.sqlite \
-  -e DATABASE_SYNCHRONIZE=true \
-  -e ENGINE_TYPE=whatsapp-web.js \
-  -e PUPPETEER_HEADLESS=true \
-  -e "PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu" \
-  -v $(pwd)/data:/app/data \
-  3bsalam/openwa-api:latest
-
-# Dashboard
-docker run -d \
-  --name openwa-dashboard \
-  -p 127.0.0.1:2886:80 \
-  3bsalam/openwa-dashboard:latest
+docker logs openwa-api | grep "API Key"
 ```
 
-| Image | Docker Hub |
+**Available images:**
+
+| Image | Tag |
 | --- | --- |
-| API | `3bsalam/openwa-api:latest` |
-| Dashboard | `3bsalam/openwa-dashboard:latest` |
+| `3bsalam/openwa-api` | `latest`, `0.2.1` |
+| `3bsalam/openwa-dashboard` | `latest`, `0.2.1` |
 
 ---
 
