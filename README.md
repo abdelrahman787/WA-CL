@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.6-blue.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.2.1-blue.svg" alt="Version"/>
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"/>
   <img src="https://img.shields.io/badge/node-22_LTS-brightgreen.svg" alt="Node"/>
   <img src="https://img.shields.io/badge/NestJS-11.x-red.svg" alt="NestJS"/>
@@ -107,6 +107,17 @@ docker compose -f docker-compose.dev.yml up -d
 # API: http://localhost:2785/api
 # Swagger: http://localhost:2785/api/docs
 ```
+
+> **Using Podman instead of Docker?**
+> Podman rootless mode requires the socket to be running and `DOCKER_HOST` to be set:
+>
+> ```bash
+> systemctl --user start podman.socket
+> systemctl --user enable podman.socket
+> export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+> ```
+>
+> Add the `export` line to your `~/.bashrc` to make it permanent.
 
 ### Option B: Local Development
 
