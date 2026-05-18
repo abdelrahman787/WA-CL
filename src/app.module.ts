@@ -1,4 +1,4 @@
-import { Module, DynamicModule, Type } from '@nestjs/common';
+import { Module, DynamicModule, Type, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -26,6 +26,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { HooksModule } from './core/hooks';
 import { PluginsModule } from './core/plugins';
 import { PluginsApiModule } from './modules/plugins/plugins.module';
+import { SecurityMiddleware } from './common/security/security.middleware';
 
 // Only import QueueModule if explicitly enabled to avoid Redis connection errors
 const queueModules: Array<Type | DynamicModule> = [];
@@ -161,4 +162,8 @@ if (process.env.QUEUE_ENABLED === 'true') {
     PluginsApiModule, // Phase 5: Plugins API
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(SecurityMiddleware).forRoutes('*');
+  }
+}

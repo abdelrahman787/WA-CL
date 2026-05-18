@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import * as crypto from 'crypto';
 import { Webhook } from './entities/webhook.entity';
+import { generateWebhookSignature } from '../../common/security/webhook-signature.util';
 import { CreateWebhookDto, UpdateWebhookDto } from './dto';
 import { createLogger } from '../../common/services/logger.service';
 import { QUEUE_NAMES } from '../queue/queue-names';
@@ -50,11 +50,13 @@ export class WebhookService {
   }
 
   async create(sessionId: string, dto: CreateWebhookDto): Promise<Webhook> {
+    const secret = this.resolveWebhookSecret(dto.secret);
+
     const webhook = this.webhookRepository.create({
       sessionId,
       url: dto.url,
       events: dto.events || ['message.received'],
-      secret: dto.secret || null,
+      secret,
       headers: dto.headers || {},
       retryCount: dto.retryCount ?? 3,
     });
@@ -88,7 +90,7 @@ export class WebhookService {
 
     if (dto.url !== undefined) webhook.url = dto.url;
     if (dto.events !== undefined) webhook.events = dto.events;
-    if (dto.secret !== undefined) webhook.secret = dto.secret;
+    if (dto.secret !== undefined) webhook.secret = this.resolveWebhookSecret(dto.secret);
     if (dto.headers !== undefined) webhook.headers = dto.headers;
     if (dto.active !== undefined) webhook.active = dto.active;
     if (dto.retryCount !== undefined) webhook.retryCount = dto.retryCount;
@@ -128,9 +130,8 @@ export class WebhookService {
       ...webhook.headers,
     };
 
-    if (webhook.secret) {
-      headers['X-OpenWA-Signature'] = this.generateSignature(body, webhook.secret);
-    }
+    const secret = this.getEffectiveSecret(webhook);
+    headers['X-OpenWA-Signature'] = generateWebhookSignature(body, secret);
 
     try {
       const response = await fetch(webhook.url, {
@@ -164,6 +165,17 @@ export class WebhookService {
 
     // Dispatch to all matching webhooks
     for (const webhook of matchingWebhooks) {
+      let deliverySecret: string;
+      try {
+        deliverySecret = this.getEffectiveSecret(webhook);
+      } catch (error) {
+        this.logger.error(`Skipping webhook ${webhook.id}: missing HMAC secret`, String(error), {
+          webhookId: webhook.id,
+          action: 'webhook_skipped_no_secret',
+        });
+        continue;
+      }
+
       // Generate unique delivery ID for each webhook
       const deliveryId = generateDeliveryId();
 
@@ -205,13 +217,12 @@ export class WebhookService {
         ...webhook.headers,
       };
 
+      const body = JSON.stringify(finalPayload);
+      const signature = generateWebhookSignature(body, deliverySecret);
+      headers['X-OpenWA-Signature'] = signature;
+
       // Use queue if available, otherwise fallback to direct delivery
       if (this.queueEnabled && this.webhookQueue) {
-        const signature = webhook.secret ? this.generateSignature(JSON.stringify(finalPayload), webhook.secret) : '';
-
-        if (webhook.secret) {
-          headers['X-OpenWA-Signature'] = signature;
-        }
 
         const jobData: WebhookJobData = {
           webhookId: webhook.id,
@@ -309,9 +320,9 @@ export class WebhookService {
     // Update retry count header
     headers['X-OpenWA-Retry-Count'] = String(attempt - 1);
 
-    // Add signature if secret is configured and not already present
-    if (webhook.secret && !headers['X-OpenWA-Signature']) {
-      headers['X-OpenWA-Signature'] = this.generateSignature(body, webhook.secret);
+    if (!headers['X-OpenWA-Signature']) {
+      const secret = this.getEffectiveSecret(webhook);
+      headers['X-OpenWA-Signature'] = generateWebhookSignature(body, secret);
     }
 
     try {
@@ -353,10 +364,35 @@ export class WebhookService {
     }
   }
 
-  private generateSignature(payload: string, secret: string): string {
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(payload);
-    return `sha256=${hmac.digest('hex')}`;
+  private resolveWebhookSecret(provided?: string): string {
+    const secret = (provided || this.configService.get<string>('webhook.defaultSecret') || '').trim();
+    const requireSecret = this.configService.get<boolean>('webhook.requireSecret', false);
+
+    if (!secret && requireSecret) {
+      throw new BadRequestException(
+        'Webhook secret is required. Provide secret in the request body or set WEBHOOK_SECRET.',
+      );
+    }
+
+    if (!secret) {
+      throw new BadRequestException('Webhook secret is required for signed deliveries.');
+    }
+
+    if (secret.length < 32) {
+      throw new BadRequestException('Webhook secret must be at least 32 characters.');
+    }
+
+    return secret;
+  }
+
+  private getEffectiveSecret(webhook: Webhook): string {
+    const secret = (webhook.secret || this.configService.get<string>('webhook.defaultSecret') || '').trim();
+
+    if (!secret) {
+      throw new Error('Webhook secret is not configured');
+    }
+
+    return secret;
   }
 
   private delay(ms: number): Promise<void> {
