@@ -1,0 +1,47 @@
+# OpenWA - Docker Compose using pre-built Docker Hub images
+# Quick Start: docker compose -f docker-compose.hub.yml up -d
+
+services:
+  openwa:
+    image: 3bsalam/openwa-api:latest
+    container_name: openwa-api
+    ports:
+      - '127.0.0.1:2785:2785'
+    environment:
+      - NODE_ENV=production
+      - PORT=2785
+      - DATABASE_TYPE=sqlite
+      - DATABASE_NAME=/app/data/openwa.sqlite
+      - DATABASE_SYNCHRONIZE=true
+      - ENGINE_TYPE=whatsapp-web.js
+      - SESSION_DATA_PATH=/app/data/sessions
+      - PUPPETEER_HEADLESS=true
+      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/data/media
+      - WEBHOOK_TIMEOUT=10000
+      - WEBHOOK_MAX_RETRIES=3
+      - QUEUE_ENABLED=false
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:2785/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dashboard:
+    image: 3bsalam/openwa-dashboard:latest
+    container_name: openwa-dashboard
+    ports:
+      - '127.0.0.1:2886:80'
+    depends_on:
+      openwa:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: openwa-network

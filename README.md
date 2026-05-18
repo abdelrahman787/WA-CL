@@ -22,6 +22,7 @@
   <img src="https://img.shields.io/badge/NestJS-11.x-red.svg" alt="NestJS"/>
   <img src="https://img.shields.io/badge/docker-ready-blue.svg" alt="Docker"/>
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6.svg" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/Docker%20Hub-3bsalam%2Fopenwa-blue?logo=docker" alt="Docker Hub"/>
 </p>
 
 ---
@@ -94,11 +95,56 @@ Built on a **pluggable architecture**, OpenWA lets you swap database engines (SQ
 
 ## 🚀 Quick Start
 
-### Option A: Docker (Recommended)
+### Option A: Docker Hub — Pre-built Images (Fastest)
+
+No need to clone or build. Pull the images directly from Docker Hub:
+
+```bash
+# Create a project folder
+mkdir openwa && cd openwa
+
+# Download the compose file
+curl -o docker-compose.hub.yml https://raw.githubusercontent.com/3bsalam-1/OpenWA/main/docker-compose.hub.yml
+
+# Start
+docker compose -f docker-compose.hub.yml up -d
+```
+
+Or run manually with `docker run`:
+
+```bash
+# API
+docker run -d \
+  --name openwa-api \
+  -p 127.0.0.1:2785:2785 \
+  -e DATABASE_TYPE=sqlite \
+  -e DATABASE_NAME=/app/data/openwa.sqlite \
+  -e DATABASE_SYNCHRONIZE=true \
+  -e ENGINE_TYPE=whatsapp-web.js \
+  -e PUPPETEER_HEADLESS=true \
+  -e "PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu" \
+  -v $(pwd)/data:/app/data \
+  3bsalam/openwa-api:latest
+
+# Dashboard
+docker run -d \
+  --name openwa-dashboard \
+  -p 127.0.0.1:2886:80 \
+  3bsalam/openwa-dashboard:latest
+```
+
+| Image | Docker Hub |
+| --- | --- |
+| API | `3bsalam/openwa-api:latest` |
+| Dashboard | `3bsalam/openwa-dashboard:latest` |
+
+---
+
+### Option B: Build from Source
 
 ```bash
 # Clone and start
-git clone https://github.com/rmyndharis/OpenWA.git
+git clone https://github.com/3bsalam-1/OpenWA.git
 cd OpenWA
 docker compose -f docker-compose.dev.yml up -d
 
@@ -119,11 +165,11 @@ docker compose -f docker-compose.dev.yml up -d
 >
 > Add the `export` line to your `~/.bashrc` to make it permanent.
 
-### Option B: Local Development
+### Option C: Local Development
 
 ```bash
 # Clone repository
-git clone https://github.com/rmyndharis/OpenWA.git
+git clone https://github.com/3bsalam-1/OpenWA.git
 cd OpenWA
 
 # Install dependencies (includes dashboard)
