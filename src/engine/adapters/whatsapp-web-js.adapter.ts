@@ -774,6 +774,42 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   // ========== Gap Quick Wins Implementation ==========
 
+  async getChatHistory(chatId: string, limit: number = 50, includeMedia: boolean = false): Promise<IncomingMessage[]> {
+    this.ensureReady();
+    const chat = await this.client!.getChatById(chatId);
+    const messages = await chat.fetchMessages({ limit });
+    const results: IncomingMessage[] = [];
+    for (const msg of messages) {
+      const out: IncomingMessage = {
+        id: msg.id._serialized,
+        from: msg.from,
+        to: msg.to,
+        chatId,
+        body: msg.body,
+        type: msg.type,
+        timestamp: msg.timestamp,
+        fromMe: msg.fromMe,
+        isGroup: chatId.endsWith('@g.us'),
+      };
+      if (includeMedia && msg.hasMedia) {
+        try {
+          const media = await msg.downloadMedia();
+          if (media) {
+            out.media = {
+              mimetype: media.mimetype,
+              filename: media.filename || undefined,
+              data: media.data,
+            };
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to download media for ${msg.id._serialized}: ${String(error)}`);
+        }
+      }
+      results.push(out);
+    }
+    return results;
+  }
+
   // Delete Message
   async deleteMessage(chatId: string, messageId: string, forEveryone: boolean = true): Promise<void> {
     this.ensureReady();

@@ -456,6 +456,16 @@ export class MessageService {
     return engine.getMessageReactions(chatId, messageId);
   }
 
+  /**
+   * Fetch chat history live from WhatsApp (bypasses local DB).
+   * Returns the most recent `limit` messages for the given chat.
+   * When `includeMedia` is true, downloads media (base64) for messages that have it.
+   */
+  async getChatHistory(sessionId: string, chatId: string, limit = 50, includeMedia = false) {
+    const engine = this.getEngine(sessionId);
+    return engine.getChatHistory(chatId, limit, includeMedia);
+  }
+
   // ========== Delete Message ==========
 
   async deleteMessage(
