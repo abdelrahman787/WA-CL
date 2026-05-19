@@ -1,4 +1,4 @@
-import { Module, DynamicModule, Type } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -26,16 +26,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { HooksModule } from './core/hooks';
 import { PluginsModule } from './core/plugins';
 import { PluginsApiModule } from './modules/plugins/plugins.module';
-
-// Only import QueueModule if explicitly enabled to avoid Redis connection errors
-const queueModules: Array<Type | DynamicModule> = [];
-if (process.env.QUEUE_ENABLED === 'true') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const queueModule = require('./modules/queue/queue.module') as {
-    QueueModule: Type;
-  };
-  queueModules.push(queueModule.QueueModule);
-}
+import { QueueModule } from './modules/queue/queue.module';
 
 @Module({
   imports: [
@@ -142,7 +133,7 @@ if (process.env.QUEUE_ENABLED === 'true') {
     StorageModule,
     AuditModule,
     EventsModule, // WebSocket real-time events
-    ...queueModules,
+    ...(process.env.QUEUE_ENABLED === 'true' ? [QueueModule] : []),
     AuthModule,
     EngineModule,
     SessionModule,

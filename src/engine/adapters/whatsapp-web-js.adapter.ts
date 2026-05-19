@@ -27,6 +27,7 @@ import {
   ProductQueryOptions,
   PaginatedProducts,
 } from '../interfaces/whatsapp-engine.interface';
+import { BadRequestException } from '@nestjs/common';
 import { createLogger } from '../../common/services/logger.service';
 import {
   GroupChat,
@@ -859,24 +860,22 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   async postTextStatus(_text: string, _options?: TextStatusOptions): Promise<StatusResult> {
     this.ensureReady();
-    // whatsapp-web.js doesn't have native status posting
-    // This would require using the underlying WhatsApp Web API directly
-    throw new Error('postTextStatus not yet implemented in whatsapp-web.js adapter');
+    throw new BadRequestException('postTextStatus is not supported by the current engine adapter');
   }
 
   async postImageStatus(_media: MediaInput, _caption?: string): Promise<StatusResult> {
     this.ensureReady();
-    throw new Error('postImageStatus not yet implemented in whatsapp-web.js adapter');
+    throw new BadRequestException('postImageStatus is not supported by the current engine adapter');
   }
 
   async postVideoStatus(_media: MediaInput, _caption?: string): Promise<StatusResult> {
     this.ensureReady();
-    throw new Error('postVideoStatus not yet implemented in whatsapp-web.js adapter');
+    throw new BadRequestException('postVideoStatus is not supported by the current engine adapter');
   }
 
   async deleteStatus(_statusId: string): Promise<void> {
     this.ensureReady();
-    throw new Error('deleteStatus not yet implemented in whatsapp-web.js adapter');
+    throw new BadRequestException('deleteStatus is not supported by the current engine adapter');
   }
 
   // ========== Catalog (Phase 3) ==========
@@ -905,12 +904,12 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
 
   async sendProduct(_chatId: string, _productId: string, _body?: string): Promise<MessageResult> {
     this.ensureReady();
-    throw new Error('sendProduct not yet implemented in whatsapp-web.js adapter');
+    throw new BadRequestException('sendProduct is not supported by the current engine adapter');
   }
 
   async sendCatalog(_chatId: string, _body?: string): Promise<MessageResult> {
     this.ensureReady();
-    throw new Error('sendCatalog not yet implemented in whatsapp-web.js adapter');
+    throw new BadRequestException('sendCatalog is not supported by the current engine adapter');
   }
 
   /* eslint-enable @typescript-eslint/require-await, @typescript-eslint/no-unused-vars */

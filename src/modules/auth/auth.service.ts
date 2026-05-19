@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException, OnModuleInit } fr
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
-import { existsSync, writeFileSync, readFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { ApiKey, ApiKeyRole } from './entities/api-key.entity';
 import { CreateApiKeyDto, UpdateApiKeyDto } from './dto';
@@ -20,40 +20,6 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    // Seed a default API key if none exist
-    const count = await this.apiKeyRepository.count();
-    let displayKey: string;
-    let isNewKey = false;
-
-    if (count === 0) {
-      // Use predictable key in development, random key in production
-      displayKey =
-        process.env.NODE_ENV === 'production' ? `owa_k1_${randomBytes(32).toString('hex')}` : 'dev-admin-key';
-
-      await this.seedApiKey(displayKey, 'Default Admin Key', ApiKeyRole.ADMIN);
-      isNewKey = true;
-
-      // Save raw key to file for startup script to read
-      try {
-        writeFileSync(API_KEY_FILE, displayKey, 'utf-8');
-      } catch (err) {
-        this.logger.warn('Could not save API key file', { error: String(err) });
-      }
-    } else {
-      // Read saved API key from file if exists
-      if (existsSync(API_KEY_FILE)) {
-        try {
-          displayKey = readFileSync(API_KEY_FILE, 'utf-8').trim();
-        } catch (error) {
-          this.logger.warn(`Failed to read API key file: ${API_KEY_FILE}`, { error: String(error) });
-          displayKey = '(check dashboard for keys)';
-        }
-      } else {
-        displayKey = '(check dashboard for keys)';
-      }
-    }
-
-    // Always show the welcome banner on startup
     const apiBaseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 2785}`;
     const dashboardUrl = process.env.DASHBOARD_URL || `http://localhost:${process.env.DASHBOARD_PORT || 2886}`;
 
@@ -65,12 +31,30 @@ export class AuthService implements OnModuleInit {
     this.logger.log(`  Dashboard: ${dashboardUrl}`);
     this.logger.log(`  API Docs:  ${apiBaseUrl}/api/docs`);
     this.logger.log('');
-    if (isNewKey) {
-      this.logger.log('  API Key (newly created):');
+
+    const count = await this.apiKeyRepository.count();
+
+    if (count === 0) {
+      // WARNING: Setting NODE_ENV=development in production uses a hardcoded key.
+      // Always use NODE_ENV=production to generate a random 64-char hex key.
+      const rawKey =
+        process.env.NODE_ENV === 'production' ? `owa_k1_${randomBytes(32).toString('hex')}` : 'dev-admin-key';
+
+      await this.seedApiKey(rawKey, 'Default Admin Key', ApiKeyRole.ADMIN);
+
+      this.logger.log('  API Key (displayed once on first boot):');
+      this.logger.log(`     ${rawKey}`);
+      this.logger.log('  Save this key. It will not be shown again.');
+
+      try {
+        writeFileSync(API_KEY_FILE, rawKey, 'utf-8');
+      } catch (err) {
+        this.logger.warn('Could not save API key file', { error: String(err) });
+      }
     } else {
-      this.logger.log('  API Key:');
+      this.logger.log('  API Key: (check dashboard or .api-key file)');
     }
-    this.logger.log(`     ${displayKey}`);
+
     this.logger.log('');
     this.logger.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     this.logger.log('');

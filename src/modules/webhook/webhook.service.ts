@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -302,54 +302,53 @@ export class WebhookService {
     webhook: Webhook,
     payload: WebhookPayload,
     headers: Record<string, string>,
-    attempt = 1,
   ): Promise<void> {
-    const body = JSON.stringify(payload);
+    for (let attempt = 1; attempt <= webhook.retryCount; attempt++) {
+      const body = JSON.stringify(payload);
+      headers['X-OpenWA-Retry-Count'] = String(attempt - 1);
 
-    // Update retry count header
-    headers['X-OpenWA-Retry-Count'] = String(attempt - 1);
-
-    // Add signature if secret is configured and not already present
-    if (webhook.secret && !headers['X-OpenWA-Signature']) {
-      headers['X-OpenWA-Signature'] = this.generateSignature(body, webhook.secret);
-    }
-
-    try {
-      const response = await fetch(webhook.url, {
-        method: 'POST',
-        headers,
-        body,
-        signal: AbortSignal.timeout(this.configService.get<number>('webhook.timeout', 10000)),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (webhook.secret && !headers['X-OpenWA-Signature']) {
+        headers['X-OpenWA-Signature'] = this.generateSignature(body, webhook.secret);
       }
 
-      // Update last triggered timestamp
-      await this.webhookRepository.update(webhook.id, {
-        lastTriggeredAt: new Date(),
-      });
+      try {
+        const response = await fetch(webhook.url, {
+          method: 'POST',
+          headers,
+          body,
+          signal: AbortSignal.timeout(this.configService.get<number>('webhook.timeout', 10000)),
+        });
 
-      this.logger.debug(`Webhook delivered to ${webhook.id}`, {
-        webhookId: webhook.id,
-        deliveryId: payload.deliveryId,
-        action: 'webhook_delivered',
-      });
-    } catch (error) {
-      this.logger.error(`Webhook delivery failed for ${webhook.id}`, String(error), {
-        webhookId: webhook.id,
-        attempt,
-        deliveryId: payload.deliveryId,
-        action: 'webhook_delivery_failed',
-      });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-      if (attempt < webhook.retryCount) {
-        const delay = this.configService.get<number>('webhook.retryDelay', 5000);
-        await this.delay(delay * attempt);
-        return this.deliverWebhook(webhook, payload, headers, attempt + 1);
+        await this.webhookRepository.update(webhook.id, {
+          lastTriggeredAt: new Date(),
+        });
+
+        this.logger.debug(`Webhook delivered to ${webhook.id}`, {
+          webhookId: webhook.id,
+          deliveryId: payload.deliveryId,
+          action: 'webhook_delivered',
+        });
+
+        return;
+      } catch (error) {
+        this.logger.error(`Webhook delivery failed for ${webhook.id}`, String(error), {
+          webhookId: webhook.id,
+          attempt,
+          deliveryId: payload.deliveryId,
+          action: 'webhook_delivery_failed',
+        });
+
+        if (attempt < webhook.retryCount) {
+          const delay = this.configService.get<number>('webhook.retryDelay', 5000);
+          await this.delay(delay * attempt);
+        } else {
+          throw error;
+        }
       }
-      throw error;
     }
   }
 

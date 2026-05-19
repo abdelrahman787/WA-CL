@@ -1,22 +1,16 @@
-import { Module, DynamicModule, Type } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Webhook } from './entities/webhook.entity';
 import { WebhookService } from './webhook.service';
 import { WebhookController } from './webhook.controller';
 import { WebhooksListController } from './webhooks-list.controller';
-
-// Only import QueueModule if explicitly enabled to avoid Redis connection errors
-const queueModules: Array<Type | DynamicModule> = [];
-if (process.env.QUEUE_ENABLED === 'true') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const queueModule = require('../queue/queue.module') as {
-    QueueModule: Type;
-  };
-  queueModules.push(queueModule.QueueModule);
-}
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Webhook], 'data'), ...queueModules],
+  imports: [
+    TypeOrmModule.forFeature([Webhook], 'data'),
+    ...(process.env.QUEUE_ENABLED === 'true' ? [QueueModule] : []),
+  ],
   controllers: [WebhookController, WebhooksListController],
   providers: [WebhookService],
   exports: [WebhookService],
