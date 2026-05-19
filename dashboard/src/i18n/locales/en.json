@@ -343,6 +343,15 @@
     },
     "messageContent": "Message Content",
     "messagePlaceholder": "Enter your message here...",
+    "humanizeLabel": "Human-like Typing",
+    "humanizeOn": "Humanize",
+    "humanizeOff": "Instant",
+    "typingSpeed": "Typing Speed",
+    "speeds": {
+      "slow": "Slow",
+      "normal": "Normal",
+      "fast": "Fast"
+    },
     "mediaUrl": "Media URL",
     "caption": "Caption",
     "filename": "Filename",

@@ -343,6 +343,15 @@
     },
     "messageContent": "תוכן ההודעה",
     "messagePlaceholder": "יש להזין כאן את ההודעה...",
+    "humanizeLabel": "הקלדה אנושית",
+    "humanizeOn": "האנשה",
+    "humanizeOff": "מיידי",
+    "typingSpeed": "מהירות הקלדה",
+    "speeds": {
+      "slow": "איטי",
+      "normal": "רגיל",
+      "fast": "מהיר"
+    },
     "mediaUrl": "כתובת המדיה",
     "caption": "כיתוב",
     "filename": "שם קובץ",

@@ -2,10 +2,11 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SessionService } from '../session/session.service';
-import { SendTextMessageDto, SendMediaMessageDto, MessageResponseDto } from './dto';
+import { SendTextMessageDto, SendMediaMessageDto, MessageResponseDto, HumanizeOptionsDto } from './dto';
 import { MediaInput } from '../../engine/interfaces/whatsapp-engine.interface';
 import { Message, MessageDirection, MessageStatus } from './entities/message.entity';
 import { HookManager } from '../../core/hooks';
+import { HumanizeService } from './humanize.service';
 
 export interface GetMessagesOptions {
   chatId?: string;
@@ -20,6 +21,7 @@ export class MessageService {
     private readonly messageRepository: Repository<Message>,
     private readonly sessionService: SessionService,
     private readonly hookManager: HookManager,
+    private readonly humanizeService: HumanizeService,
   ) {}
 
   async sendText(sessionId: string, dto: SendTextMessageDto): Promise<MessageResponseDto> {
@@ -38,6 +40,11 @@ export class MessageService {
     const finalDto = (hookData as { input: SendTextMessageDto }).input;
 
     const engine = this.getEngine(sessionId);
+
+    // Simulate human typing if enabled
+    if (finalDto.humanize?.enabled) {
+      await this.humanizeService.simulateHumanTyping(engine, finalDto.chatId, finalDto.text, finalDto.humanize);
+    }
 
     // Save message as pending BEFORE sending
     const message = await this.saveOutgoingMessage(sessionId, {
@@ -337,9 +344,14 @@ export class MessageService {
 
   async reply(
     sessionId: string,
-    dto: { chatId: string; quotedMessageId: string; text: string },
+    dto: { chatId: string; quotedMessageId: string; text: string; humanize?: HumanizeOptionsDto },
   ): Promise<MessageResponseDto> {
     const engine = this.getEngine(sessionId);
+
+    // Simulate human typing if enabled
+    if (dto.humanize?.enabled) {
+      await this.humanizeService.simulateHumanTyping(engine, dto.chatId, dto.text, dto.humanize);
+    }
 
     // Save message as pending BEFORE sending
     const message = await this.saveOutgoingMessage(sessionId, {

@@ -287,6 +287,10 @@ export interface IWhatsAppEngine {
   postVideoStatus(media: MediaInput, caption?: string): Promise<StatusResult>;
   deleteStatus(statusId: string): Promise<void>;
 
+  // Humanize / Typing Simulation
+  simulateTyping(chatId: string): Promise<void>;
+  simulateRecording(chatId: string): Promise<void>;
+
   // Catalog (Phase 3) - WhatsApp Business only
   getCatalog(): Promise<Catalog | null>;
   getProducts(options?: ProductQueryOptions): Promise<PaginatedProducts>;
