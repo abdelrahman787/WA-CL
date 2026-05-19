@@ -143,7 +143,7 @@ curl -X POST 'http://localhost:2785/api/infra/import-data' \
 }
 ```
 
-### Storage Migration (Local ↔ S3/MinIO)
+### Storage Migration (Local  S3/MinIO)
 
 OpenWA v0.2+ supports migrating media files between storage backends:
 
@@ -175,10 +175,10 @@ curl -X POST 'http://localhost:2785/api/infra/storage/import' \
 
 | Scenario                     | Support | Method                   |
 | ---------------------------- | ------- | ------------------------ |
-| Local → Built-in MinIO       | ✅      | Export → Config → Import |
-| Local → External S3          | ✅      | Export → Config → Import |
-| Built-in MinIO → External S3 | ✅      | Export → Config → Import |
-| S3 → Local                   | ✅      | Export → Config → Import |
+| Local → Built-in MinIO       |       | Export → Config → Import |
+| Local → External S3          |       | Export → Config → Import |
+| Built-in MinIO → External S3 |       | Export → Config → Import |
+| S3 → Local                   |       | Export → Config → Import |
 
 ### Redis Migration (Cache)
 
@@ -197,10 +197,10 @@ REDIS_PASSWORD=optional
 
 | Scenario                  | Support | Notes                        |
 | ------------------------- | ------- | ---------------------------- |
-| Built-in → External Redis | ✅      | Config change only           |
-| External → Built-in Redis | ✅      | Config change only           |
-| Enable → Disable Redis    | ✅      | App uses memory fallback     |
-| Disable → Enable Redis    | ✅      | Cache rebuilds automatically |
+| Built-in → External Redis |       | Config change only           |
+| External → Built-in Redis |       | Config change only           |
+| Enable → Disable Redis    |       | App uses memory fallback     |
+| Disable → Enable Redis    |       | Cache rebuilds automatically |
 
 > [!TIP]
 > **Cache Warm-up**: After switching Redis instances, the cache will automatically rebuild as requests come in. No data migration is necessary.
@@ -230,9 +230,9 @@ docker compose up -d
 
 | Scenario                  | Support | Notes             |
 | ------------------------- | ------- | ----------------- |
-| Queue Disabled → Enabled  | ✅      | Config change     |
-| Queue Enabled → Disabled  | ⚠️      | Drain queue first |
-| Built-in → External Redis | ⚠️      | Drain queue first |
+| Queue Disabled → Enabled  |       | Config change     |
+| Queue Enabled → Disabled  |       | Drain queue first |
+| Built-in → External Redis |       | Drain queue first |
 
 > [!WARNING]
 > **Job Loss Prevention**: Always ensure the MESSAGE and WEBHOOK queues are empty before switching Redis instances. Check `/admin/queues` dashboard.
@@ -272,7 +272,7 @@ async function migrateSqliteToPostgres(config: MigrationConfig): Promise<Migrati
   const results: MigrationResult[] = [];
 
   // 1. Connect to both databases
-  console.log('🔌 Connecting to databases...');
+  console.log(' Connecting to databases...');
 
   const sqliteDb = new sqlite3.Database(config.sqlitePath);
   const pgClient = new Client({ connectionString: config.postgresUrl });
@@ -280,7 +280,7 @@ async function migrateSqliteToPostgres(config: MigrationConfig): Promise<Migrati
 
   // 2. Get list of tables
   const tables = await getSqliteTables(sqliteDb);
-  console.log(`📋 Found ${tables.length} tables to migrate`);
+  console.log(` Found ${tables.length} tables to migrate`);
 
   // 3. Migration order (respect foreign keys)
   const migrationOrder = [
@@ -303,7 +303,7 @@ async function migrateSqliteToPostgres(config: MigrationConfig): Promise<Migrati
     result.duration = Date.now() - startTime;
     results.push(result);
 
-    console.log(`✅ ${table}: ${result.rowsMigrated} rows in ${result.duration}ms`);
+    console.log(` ${table}: ${result.rowsMigrated} rows in ${result.duration}ms`);
   }
 
   // 5. Reset sequences
@@ -406,7 +406,7 @@ const config: MigrationConfig = {
 
 migrateSqliteToPostgres(config)
   .then(results => {
-    console.log('\n📊 Migration Summary:');
+    console.log('\n Migration Summary:');
     console.table(
       results.map(r => ({
         Table: r.table,
@@ -514,32 +514,32 @@ if [ -z "$SESSION_ID" ]; then
 fi
 
 # Stop both instances
-echo "⏹️ Stopping services..."
+echo " Stopping services..."
 ssh old-server "docker compose down"
 ssh new-server "docker compose down"
 
 # Copy session data
-echo "📦 Copying session data..."
+echo " Copying session data..."
 rsync -avz --progress \
     "old-server:${SOURCE_DIR}/session-${SESSION_ID}/" \
     "${TARGET_DIR}/session-${SESSION_ID}/"
 
 # Copy database record
-echo "📄 Exporting session record..."
+echo " Exporting session record..."
 ssh old-server "sqlite3 /data/openwa.db \
     \"SELECT * FROM sessions WHERE id='${SESSION_ID}'\" \
     -csv" > session_record.csv
 
 # Import to new database
-echo "📥 Importing session record..."
+echo " Importing session record..."
 ssh new-server "sqlite3 /data/openwa.db \
     \".import session_record.csv sessions\""
 
 # Start new server
-echo "▶️ Starting new server..."
+echo " Starting new server..."
 ssh new-server "docker compose up -d"
 
-echo "✅ Session ${SESSION_ID} transferred successfully"
+echo " Session ${SESSION_ID} transferred successfully"
 ```
 
 #### Method 2: Export/Import via API
@@ -651,11 +651,11 @@ async function bulkTransferSessions(config: TransferConfig): Promise<void> {
     sessionIds = response.data.map((s: any) => s.id);
   }
 
-  console.log(`📋 Transferring ${sessionIds.length} sessions...`);
+  console.log(` Transferring ${sessionIds.length} sessions...`);
 
   for (const sessionId of sessionIds) {
     try {
-      console.log(`\n🔄 Processing session: ${sessionId}`);
+      console.log(`\n Processing session: ${sessionId}`);
 
       // 1. Stop session on source
       await axios.post(
@@ -674,9 +674,9 @@ async function bulkTransferSessions(config: TransferConfig): Promise<void> {
         headers: { 'X-API-Key': config.targetApiKey },
       });
 
-      console.log(`✅ Session ${sessionId} transferred`);
+      console.log(` Session ${sessionId} transferred`);
     } catch (error: any) {
-      console.error(`❌ Failed to transfer ${sessionId}: ${error.message}`);
+      console.error(` Failed to transfer ${sessionId}: ${error.message}`);
     }
   }
 }
@@ -731,21 +731,21 @@ breaking_changes:
 
 set -e
 
-echo "🚀 Upgrading OpenWA v0.1.x → v0.2.x"
+echo " Upgrading OpenWA v0.1.x → v0.2.x"
 
 # 1. Backup
-echo "📦 Creating backup..."
+echo " Creating backup..."
 BACKUP_DIR="./backups/v01-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 cp -r ./data "$BACKUP_DIR/"
 cp .env "$BACKUP_DIR/"
 
 # 2. Stop current version
-echo "⏹️ Stopping v0.1..."
+echo " Stopping v0.1..."
 docker compose down
 
 # 3. Run database migrations
-echo "🔄 Running migrations..."
+echo " Running migrations..."
 docker run --rm \
   -v $(pwd)/data:/app/data \
   -e DATABASE_URL=sqlite:///app/data/openwa.db \
@@ -753,7 +753,7 @@ docker run --rm \
   npm run migration:run
 
 # 4. Migrate configuration
-echo "⚙️ Migrating configuration..."
+echo " Migrating configuration..."
 cat > .env.new << 'EOF'
 # OpenWA v0.2.x Configuration
 
@@ -782,22 +782,22 @@ mv .env.migrated .env
 rm .env.new
 
 # 5. Start new version
-echo "▶️ Starting v0.2..."
+echo " Starting v0.2..."
 docker compose pull
 docker compose up -d
 
 # 6. Wait for health
-echo "⏳ Waiting for health check..."
+echo " Waiting for health check..."
 sleep 10
 curl -f http://localhost:2785/health || exit 1
 
 # 7. Create API key for existing integrations
-echo "🔑 Creating API key..."
+echo " Creating API key..."
 docker exec openwa npm run cli -- create-api-key --name "migrated-key"
 
-echo "✅ Upgrade complete!"
+echo " Upgrade complete!"
 echo ""
-echo "⚠️ IMPORTANT: Update your API clients:"
+echo " IMPORTANT: Update your API clients:"
 echo "  - Change /api/session to /api/sessions"
 echo "  - Change /api/send to /api/sessions/{id}/messages"
 echo "  - Add X-API-Key header to all requests"
@@ -831,14 +831,14 @@ breaking_changes:
 
 set -e
 
-echo "🚀 Upgrading OpenWA v0.2.x → v1.0.0"
+echo " Upgrading OpenWA v0.2.x → v1.0.0"
 
 # Pre-flight checks
 CURRENT_VERSION=$(docker inspect ghcr.io/rmyndharis/openwa --format '{{.Config.Labels.version}}' 2>/dev/null || echo "unknown")
 echo "Current version: $CURRENT_VERSION"
 
 # 1. Comprehensive backup
-echo "📦 Creating comprehensive backup..."
+echo " Creating comprehensive backup..."
 BACKUP_DIR="./backups/v02-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
@@ -857,7 +857,7 @@ cp .env "$BACKUP_DIR/"
 cp docker-compose.yml "$BACKUP_DIR/"
 
 # 2. Export webhook configurations (per session, new format in v1.0)
-echo "📤 Exporting webhooks..."
+echo " Exporting webhooks..."
 for sessionId in $(curl -s -H "X-API-Key: $API_KEY" \
   http://localhost:2785/api/sessions | jq -r '.data[].id'); do
   curl -s -H "X-API-Key: $API_KEY" \
@@ -866,11 +866,11 @@ for sessionId in $(curl -s -H "X-API-Key: $API_KEY" \
 done
 
 # 3. Stop services
-echo "⏹️ Stopping v0.2..."
+echo " Stopping v0.2..."
 docker compose down
 
 # 4. Update configuration
-echo "⚙️ Updating configuration..."
+echo " Updating configuration..."
 cat >> .env << 'EOF'
 
 # New in v1.0
@@ -883,7 +883,7 @@ WEBHOOK_VERSION=2
 EOF
 
 # 5. Run database migrations
-echo "🔄 Running migrations..."
+echo " Running migrations..."
 docker run --rm \
   -v $(pwd)/data:/app/data \
   --env-file .env \
@@ -891,7 +891,7 @@ docker run --rm \
   npm run migration:run
 
 # 6. Migrate webhooks to new format
-echo "🔄 Migrating webhooks..."
+echo " Migrating webhooks..."
 docker run --rm \
   -v $(pwd)/data:/app/data \
   -v "$BACKUP_DIR/webhooks.json:/tmp/webhooks.json" \
@@ -900,30 +900,30 @@ docker run --rm \
   npm run cli -- migrate-webhooks /tmp/webhooks.json
 
 # 7. Start new version
-echo "▶️ Starting v1.0..."
+echo " Starting v1.0..."
 sed -i 's/:0.2./:1.0./g' docker-compose.yml
 docker compose pull
 docker compose up -d
 
 # 8. Health check
-echo "⏳ Waiting for health check..."
+echo " Waiting for health check..."
 for i in {1..30}; do
   if curl -sf http://localhost:2785/health > /dev/null; then
-    echo "✅ Health check passed"
+    echo " Health check passed"
     break
   fi
   sleep 2
 done
 
 # 9. Verify sessions
-echo "🔍 Verifying sessions..."
+echo " Verifying sessions..."
 curl -s -H "X-API-Key: $API_KEY" \
   http://localhost:2785/api/sessions | jq '.[] | {id, status}'
 
 echo ""
-echo "✅ Upgrade to v1.0.0 complete!"
+echo " Upgrade to v1.0.0 complete!"
 echo ""
-echo "📝 Post-upgrade tasks:"
+echo " Post-upgrade tasks:"
 echo "  1. Update webhook consumers for v2 payload format"
 echo "  2. Test all active sessions"
 echo "  3. Review new rate limits"
@@ -947,13 +947,13 @@ if [ -z "$BACKUP_DIR" ] || [ -z "$TARGET_VERSION" ]; then
     exit 1
 fi
 
-echo "🔄 Rolling back to v${TARGET_VERSION}..."
+echo " Rolling back to v${TARGET_VERSION}..."
 
 # 1. Stop current
 docker compose down
 
 # 2. Restore database
-echo "📥 Restoring database..."
+echo " Restoring database..."
 if [ -f "$BACKUP_DIR/database.sql" ]; then
     # PostgreSQL
     psql $DATABASE_URL < "$BACKUP_DIR/database.sql"
@@ -963,23 +963,23 @@ else
 fi
 
 # 3. Restore auth sessions
-echo "📥 Restoring auth sessions..."
+echo " Restoring auth sessions..."
 rm -rf ./data/.wwebjs_auth
 cp -r "$BACKUP_DIR/.wwebjs_auth" ./data/
 
 # 4. Restore configuration
-echo "📥 Restoring configuration..."
+echo " Restoring configuration..."
 cp "$BACKUP_DIR/.env" .
 cp "$BACKUP_DIR/docker-compose.yml" .
 
 # 5. Start old version
-echo "▶️ Starting v${TARGET_VERSION}..."
+echo " Starting v${TARGET_VERSION}..."
 docker compose pull
 docker compose up -d
 
 # 6. Verify
 sleep 10
-curl -f http://localhost:2785/health && echo "✅ Rollback successful"
+curl -f http://localhost:2785/health && echo " Rollback successful"
 ```
 
 ### Rollback Decision Tree
@@ -1105,7 +1105,7 @@ async function fullExport(options: ExportOptions): Promise<void> {
   await fs.ensureDir(exportDir);
 
   // 1. Export database tables
-  console.log('📊 Exporting database...');
+  console.log(' Exporting database...');
   const tables = ['sessions', 'messages', 'contacts', 'webhooks', 'api_keys'];
 
   for (const table of tables) {
@@ -1114,23 +1114,23 @@ async function fullExport(options: ExportOptions): Promise<void> {
   }
 
   // 2. Export auth sessions
-  console.log('🔐 Exporting auth sessions...');
+  console.log(' Exporting auth sessions...');
   await fs.copy('./data/.wwebjs_auth', path.join(exportDir, 'auth'));
 
   // 3. Export media (optional)
   if (options.includeMedia) {
-    console.log('📁 Exporting media files...');
+    console.log(' Exporting media files...');
     await fs.copy('./data/media', path.join(exportDir, 'media'));
   }
 
   // 4. Export logs (optional)
   if (options.includeLogs) {
-    console.log('📝 Exporting logs...');
+    console.log(' Exporting logs...');
     await fs.copy('./logs', path.join(exportDir, 'logs'));
   }
 
   // 5. Export configuration (sanitized)
-  console.log('⚙️ Exporting configuration...');
+  console.log(' Exporting configuration...');
   const config = {
     version: process.env.npm_package_version,
     exportedAt: new Date().toISOString(),
@@ -1144,7 +1144,7 @@ async function fullExport(options: ExportOptions): Promise<void> {
 
   // 6. Compress (optional)
   if (options.compress) {
-    console.log('🗜️ Compressing export...');
+    console.log(' Compressing export...');
     const output = fs.createWriteStream(`${exportDir}.tar.gz`);
     const archive = archiver('tar', { gzip: true });
 
@@ -1153,9 +1153,9 @@ async function fullExport(options: ExportOptions): Promise<void> {
     await archive.finalize();
 
     await fs.remove(exportDir);
-    console.log(`✅ Export complete: ${exportDir}.tar.gz`);
+    console.log(` Export complete: ${exportDir}.tar.gz`);
   } else {
-    console.log(`✅ Export complete: ${exportDir}`);
+    console.log(` Export complete: ${exportDir}`);
   }
 }
 ```
@@ -1193,11 +1193,11 @@ async function fullImport(options: ImportOptions): Promise<void> {
   }
 
   const exportConfig = await fs.readJson(configPath);
-  console.log(`📦 Importing from v${exportConfig.version}`);
-  console.log(`📅 Exported at: ${exportConfig.exportedAt}`);
+  console.log(` Importing from v${exportConfig.version}`);
+  console.log(` Exported at: ${exportConfig.exportedAt}`);
 
   if (options.dryRun) {
-    console.log('🔍 DRY RUN - No changes will be made');
+    console.log(' DRY RUN - No changes will be made');
   }
 
   // Import order matters (foreign keys)
@@ -1208,7 +1208,7 @@ async function fullImport(options: ImportOptions): Promise<void> {
     if (!(await fs.pathExists(dataPath))) continue;
 
     const data = await fs.readJson(dataPath);
-    console.log(`📥 Importing ${table}: ${data.length} records`);
+    console.log(` Importing ${table}: ${data.length} records`);
 
     if (!options.dryRun) {
       await importTable(table, data, options.mergeStrategy);
@@ -1218,7 +1218,7 @@ async function fullImport(options: ImportOptions): Promise<void> {
   // Import auth sessions
   const authPath = path.join(importDir, 'auth');
   if (await fs.pathExists(authPath)) {
-    console.log('🔐 Importing auth sessions...');
+    console.log(' Importing auth sessions...');
     if (!options.dryRun) {
       await fs.copy(authPath, './data/.wwebjs_auth', {
         overwrite: options.mergeStrategy === 'replace',
@@ -1226,7 +1226,7 @@ async function fullImport(options: ImportOptions): Promise<void> {
     }
   }
 
-  console.log('✅ Import complete');
+  console.log(' Import complete');
 }
 ```
 

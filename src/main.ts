@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Configuration loading order (later sources do NOT override earlier ones):
-//   1. Process env (Docker, shell, systemd) — highest priority
+//   1. Process env (Docker, shell, systemd) - highest priority
 //   2. .env (project-level overrides committed/managed by the user)
 //   3. data/.env.generated (Dashboard-managed config; created on first run)
 //
@@ -162,8 +162,8 @@ async function bootstrap() {
   const port = process.env.PORT || 2785;
   await app.listen(port);
 
-  console.log(`🚀 OpenWA is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
+  console.log(`OpenWA is running on: http://localhost:${port}`);
+  console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
 void bootstrap();

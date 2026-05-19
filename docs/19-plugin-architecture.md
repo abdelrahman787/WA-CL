@@ -2,27 +2,27 @@
 
 ## Implementation Status
 
-> **Current Status: ⚠️ Partially Implemented**
+> **Current Status:  Partially Implemented**
 >
 > The core plugin infrastructure is functional. Advanced features are planned for future releases.
 
 | Component | Status | Location |
 |-----------|--------|----------|
-| **HookManager** | ✅ Implemented | `src/core/hooks/hook-manager.service.ts` |
-| **PluginLoaderService** | ✅ Implemented | `src/core/plugins/plugin-loader.service.ts` |
-| **PluginStorageService** | ✅ Implemented | `src/core/plugins/plugin-storage.service.ts` |
-| **Manifest loading** | ✅ Implemented | Loads from `plugins/` directory |
-| **Plugin lifecycle** | ✅ Implemented | load, enable, disable, unload |
-| **Dashboard UI** | ✅ Implemented | `dashboard/src/pages/Plugins.tsx` |
-| **REST API** | ✅ Implemented | `src/modules/plugins/plugins.controller.ts` |
+| **HookManager** |  Implemented | `src/core/hooks/hook-manager.service.ts` |
+| **PluginLoaderService** |  Implemented | `src/core/plugins/plugin-loader.service.ts` |
+| **PluginStorageService** |  Implemented | `src/core/plugins/plugin-storage.service.ts` |
+| **Manifest loading** |  Implemented | Loads from `plugins/` directory |
+| **Plugin lifecycle** |  Implemented | load, enable, disable, unload |
+| **Dashboard UI** |  Implemented | `dashboard/src/pages/Plugins.tsx` |
+| **REST API** |  Implemented | `src/modules/plugins/plugins.controller.ts` |
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| **@openwa/plugin-sdk** | 🔜 Planned | NPM package not yet published |
-| **Sandboxed execution** | 🔜 Planned | vm2 isolation not implemented |
-| **Permission enforcement** | ⚠️ Partial | Defined in manifest, not enforced |
-| **Built-in plugins** | 🔜 Planned | Auto-reply, Translation examples |
-| **Plugin marketplace** | 🔜 Planned | Install from npm/github |
+| **@openwa/plugin-sdk** |  Planned | NPM package not yet published |
+| **Sandboxed execution** |  Planned | vm2 isolation not implemented |
+| **Permission enforcement** |  Partial | Defined in manifest, not enforced |
+| **Built-in plugins** |  Planned | Auto-reply, Translation examples |
+| **Plugin marketplace** |  Planned | Install from npm/github |
 
 ---
 

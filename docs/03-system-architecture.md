@@ -1219,9 +1219,9 @@ flowchart TB
 | **Resource Usage** | High (~500MB/session) | Low (~50MB/session) |
 | **Stability** | Good | Good |
 | **Community** | Large | Large |
-| **Multi-device** | ✅ | ✅ |
-| **QR Code** | ✅ | ✅ |
-| **Phone Link** | ❌ | ✅ |
+| **Multi-device** |  |  |
+| **QR Code** |  |  |
+| **Phone Link** |  |  |
 | **Maintenance** | Active | Active |
 
 ### Benefits of Abstraction
@@ -1539,8 +1539,8 @@ OpenWA supports SQLite for lightweight deployments and PostgreSQL for high-volum
 |---------|--------|------------|
 | **Setup** | Zero config | Requires server |
 | **Concurrent writes** | Limited (1 writer) | Excellent |
-| **Horizontal scaling** | ❌ | ✅ |
-| **Table partitioning** | ❌ | ✅ |
+| **Horizontal scaling** |  |  |
+| **Table partitioning** |  |  |
 | **Memory footprint** | ~10MB | ~100MB+ |
 | **Backup** | Copy file | pg_dump |
 | **Best for** | 1-5 sessions | 5+ sessions |
@@ -1705,21 +1705,21 @@ OpenWA provides several deployment profiles for different needs:
 
 ```mermaid
 flowchart LR
-    subgraph Minimal["🪶 Minimal Profile"]
+    subgraph Minimal[" Minimal Profile"]
         M1[SQLite]
         M2[Local Storage]
         M3[In-Memory Cache]
         M4[Single Session]
     end
 
-    subgraph Standard["⚡ Standard Profile"]
+    subgraph Standard[" Standard Profile"]
         S1[PostgreSQL]
         S2[Local Storage]
         S3[Redis]
         S4[Multi Session]
     end
 
-    subgraph Enterprise["🏢 Enterprise Profile"]
+    subgraph Enterprise[" Enterprise Profile"]
         E1[PostgreSQL Cluster]
         E2[S3/MinIO]
         E3[Redis Cluster]

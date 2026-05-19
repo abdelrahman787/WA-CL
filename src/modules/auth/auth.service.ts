@@ -60,15 +60,15 @@ export class AuthService implements OnModuleInit {
     this.logger.log('');
     this.logger.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     this.logger.log('');
-    this.logger.log('  🟢 Welcome to OpenWA - WhatsApp API Gateway');
+    this.logger.log('  Welcome to OpenWA - WhatsApp API Gateway');
     this.logger.log('');
-    this.logger.log(`  📊 Dashboard: ${dashboardUrl}`);
-    this.logger.log(`  📚 API Docs:  ${apiBaseUrl}/api/docs`);
+    this.logger.log(`  Dashboard: ${dashboardUrl}`);
+    this.logger.log(`  API Docs:  ${apiBaseUrl}/api/docs`);
     this.logger.log('');
     if (isNewKey) {
-      this.logger.log('  🔑 API Key (newly created):');
+      this.logger.log('  API Key (newly created):');
     } else {
-      this.logger.log('  🔑 API Key:');
+      this.logger.log('  API Key:');
     }
     this.logger.log(`     ${displayKey}`);
     this.logger.log('');

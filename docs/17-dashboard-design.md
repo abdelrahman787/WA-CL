@@ -100,11 +100,11 @@ flowchart TB
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  🔵 OpenWA                              🔍 Search    👤 Admin    ☀️  │
+│   OpenWA                               Search     Admin      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌─────────────┬─────────────┬─────────────┬─────────────┐          │
-│  │   📱 5      │   ✅ 4      │   📨 1,234  │   🔗 3      │          │
+│  │    5      │    4      │    1,234  │    3      │          │
 │  │  Sessions   │  Connected  │   Messages  │  Webhooks   │          │
 │  │             │             │   (Today)   │   Active    │          │
 │  └─────────────┴─────────────┴─────────────┴─────────────┘          │
@@ -112,7 +112,7 @@ flowchart TB
 │  ┌──────────────────────────────────┐ ┌────────────────────────┐    │
 │  │  Sessions Overview               │ │  Recent Activity       │    │
 │  │  ┌──────┬──────┬──────┬──────┐  │ │                        │    │
-│  │  │ 🟢   │ 🟢   │ 🟢   │ 🟡   │  │ │  10:30 Message sent    │    │
+│  │  │    │    │    │    │  │ │  10:30 Message sent    │    │
 │  │  │ CS-1 │ CS-2 │ Sales│ Supp │  │ │  10:28 Webhook called  │    │
 │  │  │ 123  │ 456  │  789 │  -   │  │ │  10:25 Session online  │    │
 │  │  └──────┴──────┴──────┴──────┘  │ │  10:20 Message recv    │    │
@@ -142,34 +142,34 @@ flowchart TB
 │  ← Sessions                                        [+ New Session]   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  🔍 Search sessions...              Filter: [All ▾] [Status ▾]      │
+│   Search sessions...              Filter: [All ] [Status ]      │
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │ ● Customer Support 1                              🟢 Connected │  │
-│  │   📱 +62 812-3456-789                                          │  │
-│  │   📨 1,234 messages | Last active: 2 min ago                   │  │
+│  │  Customer Support 1                               Connected │  │
+│  │    +62 812-3456-789                                          │  │
+│  │    1,234 messages | Last active: 2 min ago                   │  │
 │  │   ─────────────────────────────────────────────────────────── │  │
-│  │   [📷 QR] [💬 Test Chat] [⚙️ Settings] [🗑️ Delete]             │  │
+│  │   [ QR] [ Test Chat] [ Settings] [ Delete]             │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │ ● Sales Bot                                       🟢 Connected │  │
-│  │   📱 +62 821-9876-543                                          │  │
-│  │   📨 567 messages | Last active: 5 min ago                     │  │
+│  │  Sales Bot                                        Connected │  │
+│  │    +62 821-9876-543                                          │  │
+│  │    567 messages | Last active: 5 min ago                     │  │
 │  │   ─────────────────────────────────────────────────────────── │  │
-│  │   [📷 QR] [💬 Test Chat] [⚙️ Settings] [🗑️ Delete]             │  │
+│  │   [ QR] [ Test Chat] [ Settings] [ Delete]             │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │ ○ Support Backup                              🟡 Disconnected  │  │
-│  │   📱 Not connected                                             │  │
-│  │   📨 0 messages | Never active                                 │  │
+│  │  Support Backup                               Disconnected  │  │
+│  │    Not connected                                             │  │
+│  │    0 messages | Never active                                 │  │
 │  │   ─────────────────────────────────────────────────────────── │  │
-│  │   [📷 Scan QR] [⚙️ Settings] [🗑️ Delete]                       │  │
+│  │   [ Scan QR] [ Settings] [ Delete]                       │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ────────────────────────────────────────────────────────────────   │
-│  Showing 3 of 3 sessions                              [◀] 1 [▶]     │
+│  Showing 3 of 3 sessions                              [] 1 []     │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -178,25 +178,25 @@ flowchart TB
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  ← Sessions / Customer Support 1                    🟢 Connected     │
+│  ← Sessions / Customer Support 1                     Connected     │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌─────────────────────────────────────────────────────────────┐    │
 │  │  ┌─────────┐                                                │    │
-│  │  │  👤     │  Customer Support 1                            │    │
+│  │  │       │  Customer Support 1                            │    │
 │  │  │ Avatar  │  +62 812-3456-789                              │    │
-│  │  │         │  Status: 🟢 Connected                          │    │
+│  │  │         │  Status:  Connected                          │    │
 │  │  └─────────┘  Platform: Android                             │    │
 │  │                                                              │    │
 │  │  [Restart Session] [Logout] [Delete]                        │    │
 │  └─────────────────────────────────────────────────────────────┘    │
 │                                                                      │
 │  ┌─────────────────────┬─────────────────────┐                      │
-│  │  📊 Statistics      │  ⚙️ Configuration    │                      │
+│  │   Statistics      │   Configuration    │                      │
 │  ├─────────────────────┼─────────────────────┤                      │
 │  │                     │                     │                      │
 │  │  Messages Sent      │  Auto Reconnect     │                      │
-│  │  ████████░░ 1,234   │  [✓] Enabled        │                      │
+│  │  ████████░░ 1,234   │  [] Enabled        │                      │
 │  │                     │                     │                      │
 │  │  Messages Received  │  Webhook URL        │                      │
 │  │  ██████████ 2,567   │  https://...        │                      │
@@ -212,13 +212,13 @@ flowchart TB
 │  ┌─────────────────────────────────────────────────────────────┐    │
 │  │  Recent Messages                          [View All →]      │    │
 │  │  ───────────────────────────────────────────────────────── │    │
-│  │  → +62 821... | Hello, how can I help?     | 10:30 ✓✓      │    │
+│  │  → +62 821... | Hello, how can I help?     | 10:30       │    │
 │  │  ← +62 821... | I need product info        | 10:28          │    │
-│  │  → +62 821... | Sure! Here's our catalog   | 10:25 ✓✓      │    │
+│  │  → +62 821... | Sure! Here's our catalog   | 10:25       │    │
 │  │  ← +62 813... | Thanks for your help!      | 10:20          │    │
 │  └─────────────────────────────────────────────────────────────┘    │
 │                                                                      │
-│  [💬 Open Test Chat]                                                 │
+│  [ Open Test Chat]                                                 │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -249,7 +249,7 @@ flowchart TB
 │     ──────────────────────────────────────────────────────          │
 │                                                                      │
 │     1. Open WhatsApp on your phone                                   │
-│     2. Tap Menu ⋮ or Settings ⚙                                     │
+│     2. Tap Menu ⋮ or Settings                                      │
 │     3. Tap Linked Devices                                            │
 │     4. Tap Link a Device                                             │
 │     5. Point your phone at this screen                               │
@@ -272,26 +272,26 @@ flowchart TB
 │  │  Contacts            │ │  +62 821-9876-543                  │    │
 │  │  ──────────────────  │ │  John Doe                          │    │
 │  │                      │ ├────────────────────────────────────┤    │
-│  │  🔍 Search...        │ │                                    │    │
+│  │   Search...        │ │                                    │    │
 │  │                      │ │  ┌──────────────────────────────┐ │    │
 │  │  ┌────────────────┐  │ │  │ Hello! How can I help you?  │ │    │
-│  │  │ 👤 John Doe    │  │ │  │                    10:30 ✓✓ │ │    │
+│  │  │  John Doe    │  │ │  │                    10:30  │ │    │
 │  │  │    Last: Hi!   │  │ │  └──────────────────────────────┘ │    │
 │  │  └────────────────┘  │ │                                    │    │
 │  │                      │ │      ┌─────────────────────────┐   │    │
 │  │  ┌────────────────┐  │ │      │ I need help with my    │   │    │
-│  │  │ 👤 Jane Smith  │  │ │      │ order #12345           │   │    │
+│  │  │  Jane Smith  │  │ │      │ order #12345           │   │    │
 │  │  │    Last: OK    │  │ │      │              10:31     │   │    │
 │  │  └────────────────┘  │ │      └─────────────────────────┘   │    │
 │  │                      │ │                                    │    │
 │  │  ┌────────────────┐  │ │  ┌──────────────────────────────┐ │    │
-│  │  │ 👤 Bob Wilson  │  │ │  │ Sure! Let me check that    │ │    │
+│  │  │  Bob Wilson  │  │ │  │ Sure! Let me check that    │ │    │
 │  │  │    Last: Thx   │  │ │  │ for you. One moment...     │ │    │
-│  │  └────────────────┘  │ │  │                    10:32 ✓✓ │ │    │
+│  │  └────────────────┘  │ │  │                    10:32  │ │    │
 │  │                      │ │  └──────────────────────────────┘ │    │
 │  │                      │ │                                    │    │
 │  │  ──────────────────  │ ├────────────────────────────────────┤    │
-│  │  [+ New Chat]        │ │  📎 [                        ] 📤  │    │
+│  │  [+ New Chat]        │ │   [                        ]   │    │
 │  └──────────────────────┘ │     Type a message...              │    │
 │                           └────────────────────────────────────┘    │
 │                                                                      │
@@ -306,7 +306,7 @@ flowchart TB
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  🔗 Main Webhook                                   ✅ Active   │  │
+│  │   Main Webhook                                    Active   │  │
 │  │  https://api.example.com/webhook/openwa                        │  │
 │  │  Events: message.received, message.ack, session.status         │  │
 │  │  Sessions: All                                                 │  │
@@ -316,7 +316,7 @@ flowchart TB
 │  └───────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  🔗 Analytics Webhook                              ✅ Active   │  │
+│  │   Analytics Webhook                               Active   │  │
 │  │  https://analytics.example.com/track                           │  │
 │  │  Events: message.received                                      │  │
 │  │  Sessions: cs-1, sales                                         │  │
@@ -326,7 +326,7 @@ flowchart TB
 │  └───────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  🔗 Backup Webhook                              ⏸️ Disabled    │  │
+│  │   Backup Webhook                               Disabled    │  │
 │  │  https://backup.example.com/wa                                 │  │
 │  │  Events: message.received, message.ack                         │  │
 │  │  Sessions: All                                                 │  │

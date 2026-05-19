@@ -26,73 +26,73 @@
 
 ---
 
-## ✨ Why OpenWA?
+## Why OpenWA?
 
-**OpenWA** is a free, open-source WhatsApp API Gateway designed for developers who need full control over their messaging infrastructure—without vendor lock-in or hidden paywalls.
+**OpenWA** is a free, open-source WhatsApp API Gateway designed for developers who need full control over their messaging infrastructure, without vendor lock-in or hidden paywalls.
 
 Built on a **pluggable architecture**, OpenWA lets you swap database engines (SQLite/PostgreSQL), storage backends (Local/S3), and cache layers (Memory/Redis) without changing a single line of application code.
 
 |                               |                                                              |
 | ----------------------------- | ------------------------------------------------------------ |
-| 🔓 **100% Open Source**       | No licensing fees, no feature locks, full source code access |
-| 🏗️ **Pluggable Architecture** | Swap adapters for database, storage, and cache via config    |
-| 🖥️ **Full Dashboard**         | Modern React UI for session, webhook, and API key management |
-| 🔹 **Multi-Session Ready**    | Run multiple WhatsApp sessions concurrently on one instance  |
-| 🐳 **Docker Native**          | Production-ready with zero configuration                     |
-| 🔗 **n8n Integration**        | Community nodes for workflow automation                      |
+| **100% Open Source**       | No licensing fees, no feature locks, full source code access |
+| **Pluggable Architecture** | Swap adapters for database, storage, and cache via config    |
+| **Full Dashboard**         | Modern React UI for session, webhook, and API key management |
+| **Multi-Session Ready**    | Run multiple WhatsApp sessions concurrently on one instance  |
+| **Docker Native**          | Production-ready with zero configuration                     |
+| **n8n Integration**        | Community nodes for workflow automation                      |
 
 ---
 
-## 🎯 Features
+## Features
 
 ### Core Features
 
 | Feature       | Status | Description                          |
 | ------------- | ------ | ------------------------------------ |
-| REST API      | ✅     | Full WhatsApp API via HTTP endpoints |
-| Multi-Session | ✅     | Manage multiple WhatsApp accounts    |
-| Webhooks      | ✅     | Real-time events with HMAC signature |
-| Web Dashboard | ✅     | Visual management interface          |
-| API Key Auth  | ✅     | Secure API authentication            |
-| Swagger Docs  | ✅     | Interactive API documentation        |
+| REST API      | Yes    | Full WhatsApp API via HTTP endpoints |
+| Multi-Session | Yes    | Manage multiple WhatsApp accounts    |
+| Webhooks      | Yes    | Real-time events with HMAC signature |
+| Web Dashboard | Yes    | Visual management interface          |
+| API Key Auth  | Yes    | Secure API authentication            |
+| Swagger Docs  | Yes    | Interactive API documentation        |
 
 ### Messaging
 
 | Feature           | Status | Description                      |
 | ----------------- | ------ | -------------------------------- |
-| Text Messages     | ✅     | Send/receive text messages       |
-| Media Messages    | ✅     | Images, videos, documents, audio |
-| Message Reactions | ✅     | React to messages with emoji     |
-| Bulk Messaging    | ✅     | Send to multiple recipients      |
-| Message Status    | ✅     | Track delivery and read receipts |
+| Text Messages     | Yes    | Send/receive text messages       |
+| Media Messages    | Yes    | Images, videos, documents, audio |
+| Message Reactions | Yes    | React to messages with emoji     |
+| Bulk Messaging    | Yes    | Send to multiple recipients      |
+| Message Status    | Yes    | Track delivery and read receipts |
 
 ### Advanced
 
 | Feature             | Status | Description                        |
 | ------------------- | ------ | ---------------------------------- |
-| Groups API          | ✅     | Create, manage, and message groups |
-| Channels/Newsletter | ✅     | WhatsApp Channels support          |
-| Labels Management   | ✅     | Organize chats with labels         |
-| Proxy Support       | ✅     | Per-session proxy configuration    |
-| Rate Limiting       | ✅     | Configurable request limits        |
-| CIDR Whitelisting   | ✅     | IP-based access control            |
-| Audit Logging       | ✅     | Track all API operations           |
+| Groups API          | Yes    | Create, manage, and message groups |
+| Channels/Newsletter | Yes    | WhatsApp Channels support          |
+| Labels Management   | Yes    | Organize chats with labels         |
+| Proxy Support       | Yes    | Per-session proxy configuration    |
+| Rate Limiting       | Yes    | Configurable request limits        |
+| CIDR Whitelisting   | Yes    | IP-based access control            |
+| Audit Logging       | Yes    | Track all API operations           |
 
 ### Infrastructure
 
 | Feature          | Status | Description                    |
 | ---------------- | ------ | ------------------------------ |
-| SQLite           | ✅     | Zero-config embedded database  |
-| PostgreSQL       | ✅     | Production-grade database      |
-| Redis Cache      | ✅     | Optional performance caching   |
-| S3/MinIO Storage | ✅     | Scalable media storage         |
-| Docker           | ✅     | One-command deployment         |
-| Health Checks    | ✅     | Kubernetes-ready probes        |
-| Data Migration   | ✅     | Export/import between backends |
+| SQLite           | Yes    | Zero-config embedded database  |
+| PostgreSQL       | Yes    | Production-grade database      |
+| Redis Cache      | Yes    | Optional performance caching   |
+| S3/MinIO Storage | Yes    | Scalable media storage         |
+| Docker           | Yes    | One-command deployment         |
+| Health Checks    | Yes    | Kubernetes-ready probes        |
+| Data Migration   | Yes    | Export/import between backends |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option A: Docker (Recommended)
 
@@ -129,7 +129,7 @@ npm run dev
 
 ---
 
-## 🏭 Production Deployment
+## Production Deployment
 
 For production, use the main `docker-compose.yml` with optional services:
 
@@ -158,7 +158,7 @@ docker compose --profile full up -d
 > - Development (`docker-compose.dev.yml`): SQLite, local storage, both API & Dashboard included
 > - Production (`docker-compose.yml`): Configurable database, profiles for optional services
 
-## 🔌 Ports
+## Ports
 
 | Service   | Port            | Description              |
 | --------- | --------------- | ------------------------ |
@@ -168,7 +168,7 @@ docker compose --profile full up -d
 
 ---
 
-## 📡 API Examples
+## API Examples
 
 ### Create a Session
 
@@ -218,7 +218,7 @@ curl -X POST http://localhost:2785/api/sessions/{sessionId}/webhooks \
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer         | Technology              |
 | ------------- | ----------------------- |
@@ -234,7 +234,7 @@ curl -X POST http://localhost:2785/api/sessions/{sessionId}/webhooks \
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 openwa/
@@ -267,7 +267,7 @@ openwa/
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 Comprehensive documentation is available in the `docs/` folder:
 
@@ -284,7 +284,7 @@ Comprehensive documentation is available in the `docs/` folder:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Here's how to get started:
 
@@ -298,9 +298,9 @@ Please read our [Development Guidelines](./docs/08-development-guidelines.md) fo
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the **MIT License** – free for personal and commercial use.
+This project is licensed under the **MIT License** - free for personal and commercial use.
 
 See [LICENSE](./LICENSE) for details.
 
@@ -308,12 +308,12 @@ See [LICENSE](./LICENSE) for details.
 
 <div align="center">
 
-**OpenWA** – Free, Open Source WhatsApp API Gateway
+**OpenWA** - Free, Open Source WhatsApp API Gateway
 
-[📖 Documentation](./docs/README.md) · [🔌 API Docs](http://localhost:2785/api/docs) · [🐛 Report Bug](https://github.com/rmyndharis/OpenWA/issues) · [💡 Request Feature](https://github.com/rmyndharis/OpenWA/issues)
+[Documentation](./docs/README.md) · [API Docs](http://localhost:2785/api/docs) · [Report Bug](https://github.com/rmyndharis/OpenWA/issues) · [Request Feature](https://github.com/rmyndharis/OpenWA/issues)
 
 <br/>
 
-<sub>Made with ❤️ by <a href="https://github.com/rmyndharis">Yudhi Armyndharis</a> and the OpenWA Community</sub>
+<sub>Made by <a href="https://github.com/rmyndharis">Yudhi Armyndharis</a> and the OpenWA Community</sub>
 
 </div>

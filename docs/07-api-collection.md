@@ -571,7 +571,7 @@ React to message.
 curl -X POST http://localhost:2785/api/sessions/default/messages/MSG_ABC123/react \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"emoji": "👍"}'
+  -d '{"emoji": ""}'
 ```
 
 ## 07.5 Contacts API

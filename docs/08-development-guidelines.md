@@ -1011,18 +1011,18 @@ docker compose logs -f app
 ### Database Queries
 
 ```typescript
-// ❌ Bad: N+1 query problem
+//  Bad: N+1 query problem
 const sessions = await sessionRepo.find();
 for (const session of sessions) {
   session.webhooks = await webhookRepo.find({ where: { sessionId: session.id } });
 }
 
-// ✅ Good: Use relations
+//  Good: Use relations
 const sessions = await sessionRepo.find({
   relations: ['webhooks'],
 });
 
-// ✅ Good: Use QueryBuilder for complex queries
+//  Good: Use QueryBuilder for complex queries
 const sessions = await sessionRepo
   .createQueryBuilder('session')
   .leftJoinAndSelect('session.webhooks', 'webhook')
@@ -1071,19 +1071,19 @@ export class SessionService {
 ### Async Operations
 
 ```typescript
-// ❌ Bad: Sequential execution
+//  Bad: Sequential execution
 const contact1 = await getContact('id1');
 const contact2 = await getContact('id2');
 const contact3 = await getContact('id3');
 
-// ✅ Good: Parallel execution
+//  Good: Parallel execution
 const [contact1, contact2, contact3] = await Promise.all([
   getContact('id1'),
   getContact('id2'),
   getContact('id3'),
 ]);
 
-// ✅ Good: Batch processing with concurrency limit
+//  Good: Batch processing with concurrency limit
 import pLimit from 'p-limit';
 
 const limit = pLimit(5); // Max 5 concurrent

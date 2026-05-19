@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lockfile compatibility**: Regenerated `package-lock.json` with npm 10 to match CI runtime
 - **TypeScript type conflicts**: Fixed `whatsapp-web.js` type mismatches after dependency update using `Omit<>` pattern
 - **ESLint peer dependency**: Pinned `@eslint/js` and `eslint` to v9 to resolve Dependabot-introduced peer conflict
-- **CI npm audit**: Changed audit level from `high` to `critical` — high-severity findings are all in unfixable transitive dependencies
+- **CI npm audit**: Changed audit level from `high` to `critical` - high-severity findings are all in unfixable transitive dependencies
 
 ### Changed
 
@@ -98,21 +98,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Dashboard React Query**: Migrate all 8 pages from manual `useState`/`useEffect` to `@tanstack/react-query` with automatic caching and deduplication
-- **Dashboard code splitting**: Route-level lazy loading with `React.lazy` + `Suspense` — main bundle reduced 36%
+- **Dashboard code splitting**: Route-level lazy loading with `React.lazy` + `Suspense` - main bundle reduced 36%
 
 ### Added
 
 - **CI npm audit**: `npm audit --audit-level=high` in CI pipeline to catch vulnerabilities
 - **CI coverage threshold**: Jest coverage floor to prevent regression
 - **CI dashboard job**: Lint + build for React dashboard runs parallel with backend CI
-- **Dependabot**: Automated dependency updates — npm weekly, GitHub Actions monthly
+- **Dependabot**: Automated dependency updates - npm weekly, GitHub Actions monthly
 
 ## [0.1.1] - 2026-02-17
 
 ### Added
 
 - **Unit Tests**: 94 new tests across auth, session, message, and webhook modules (110 total, ~17% coverage)
-- **Release Workflow**: `release.yml` GitHub Actions — tag-triggered with test gate, GitHub Release, and Docker semver tagging
+- **Release Workflow**: `release.yml` GitHub Actions - tag-triggered with test gate, GitHub Release, and Docker semver tagging
 - **SDK Scaffolds**: JavaScript/TypeScript and Python client libraries in `sdk/` directory
 - New hook events: `webhook:queued` (after queue add) and `webhook:delivered` (after actual delivery)
 
@@ -126,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2026-02-05
 
-### 🎉 Initial Release
+### Initial Release
 
 OpenWA v0.1.0 is the first stable release featuring a complete WhatsApp API Gateway with all core functionality.
 

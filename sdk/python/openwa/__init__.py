@@ -45,7 +45,7 @@ class MessageResponse:
 class OpenWAClient:
     """OpenWA API client.
 
-    This is a scaffold — methods will be auto-generated from the OpenAPI spec.
+    This is a scaffold - methods will be auto-generated from the OpenAPI spec.
     """
 
     def __init__(self, base_url: str, api_key: str, timeout: float = 30.0) -> None:
@@ -55,7 +55,7 @@ class OpenWAClient:
             timeout=timeout,
         )
 
-    # Placeholder — will be auto-generated from OpenAPI spec
+    # Placeholder - will be auto-generated from OpenAPI spec
     @property
     def sessions(self) -> "_SessionsResource":
         return _SessionsResource(self)

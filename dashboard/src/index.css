@@ -341,7 +341,7 @@ code {
   text-align: right;
 }
 
-/* URLs, emails, phones — force LTR even inside RTL */
+/* URLs, emails, phones - force LTR even inside RTL */
 [dir="rtl"] input[type="url"],
 [dir="rtl"] input[type="email"],
 [dir="rtl"] input[type="tel"] {
@@ -353,7 +353,7 @@ code {
   flex-direction: row-reverse;
 }
 
-/* Toast container — slide in from the opposite side */
+/* Toast container - slide in from the opposite side */
 [dir="rtl"] .toast-container {
   right: auto;
   left: 1rem;

@@ -459,7 +459,7 @@ export function Sessions() {
                 <div className="session-info">
                   <div className="info-row">
                     <span className="info-label">{t('sessions.card.phone')}</span>
-                    <span className="info-value">{session.phone || '—'}</span>
+                    <span className="info-value">{session.phone || '-'}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">{t('sessions.card.sessionId')}</span>

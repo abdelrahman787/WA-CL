@@ -49,7 +49,7 @@ flowchart TB
 | Integration Test Coverage | > 70% | 0% | High |
 | E2E Critical Paths | 100% | 0% | High |
 | Performance Benchmarks | Pass all | Not started | Medium |
-| Security Scan | 0 Critical | ✅ Passing | High |
+| Security Scan | 0 Critical |  Passing | High |
 
 ## 09.2 Unit Testing
 
@@ -709,8 +709,8 @@ jobs:
 
 | Test | Target | Actual | Status |
 |------|--------|--------|--------|
-| API p95 latency | <500ms | 320ms | ✅ |
-| Throughput | 100 req/s | 125 req/s | ✅ |
+| API p95 latency | <500ms | 320ms |  |
+| Throughput | 100 req/s | 125 req/s |  |
 ```
 ---
 

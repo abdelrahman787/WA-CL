@@ -38,9 +38,9 @@ export function Dashboard() {
       trend: `+${stats?.ready ?? 0}`,
       trendUp: true,
     },
-    { label: t('dashboard.stats.messagesToday'), value: '—', icon: Send, trend: '0', trendUp: null },
+    { label: t('dashboard.stats.messagesToday'), value: '-', icon: Send, trend: '0', trendUp: null },
     { label: t('dashboard.stats.webhooksConfigured'), value: webhookCount, icon: Webhook, trend: '0', trendUp: null },
-    { label: t('dashboard.stats.apiCalls'), value: '—', icon: Activity, trend: '0', trendUp: null },
+    { label: t('dashboard.stats.apiCalls'), value: '-', icon: Activity, trend: '0', trendUp: null },
   ];
 
   const formatLastActive = (date?: string) => {
@@ -135,7 +135,7 @@ export function Dashboard() {
                     {session.name}
                   </span>
                 </div>
-                <span className="phone">{session.phone || '—'}</span>
+                <span className="phone">{session.phone || '-'}</span>
                 <span className={`status-pill ${session.status}`}>{formatStatus(session.status)}</span>
                 <span className="last-active">{formatLastActive(session.lastActive)}</span>
                 <div className="actions">
