@@ -75,7 +75,9 @@ export function Sessions() {
       // Keep qrData alive so the polling interval keeps retrying until the QR
       // is ready. Only stop polling if the session itself has failed.
       const currentSession = await sessionApi.get(sessionId).catch(() => null);
-      if (!currentSession || currentSession.status === 'failed' || currentSession.status === 'disconnected') {
+      const stillInitializing = currentSession &&
+        ['initializing', 'connecting', 'qr_ready'].includes(currentSession.status);
+      if (!stillInitializing) {
         setQrData(null);
         currentSessionName.current = '';
         fetchSessions();
