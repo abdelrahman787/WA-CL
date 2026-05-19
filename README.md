@@ -22,6 +22,9 @@
   <img src="https://img.shields.io/badge/NestJS-11.x-red.svg" alt="NestJS"/>
   <img src="https://img.shields.io/badge/docker-ready-blue.svg" alt="Docker"/>
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6.svg" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/tests-passing-brightgreen.svg" alt="Tests"/>
+  <img src="https://img.shields.io/badge/coverage-75%25-yellow.svg" alt="Coverage"/>
+  <img src="https://github.com/rmyndharis/OpenWA/actions/workflows/ci.yml/badge.svg" alt="CI"/>
 </p>
 
 ---
