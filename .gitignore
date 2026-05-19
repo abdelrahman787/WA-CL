@@ -66,6 +66,9 @@ uploads/
 # Git worktrees
 .worktrees/
 
+# TypeScript
+*.tsbuildinfo
+
 # AI Agents
 .agent/
 .claude/
