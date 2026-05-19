@@ -101,9 +101,9 @@ Access:
 
 ### API Key
 
-OpenWA seeds a default API key on first run and writes it to:
+OpenWA seeds a random default admin API key on first run and writes it to `data/.api-key`. The key is printed in the server startup log.
 
-- `data/.api-key` (development)
+For local development only, you may set `ALLOW_DEV_API_KEY=true` to use the predictable key `dev-admin-key` (never enable this in production or shared environments).
 
 You can also create new keys via the API (see [API Specification](./06-api-specification.md)).
 
