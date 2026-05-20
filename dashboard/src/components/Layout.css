@@ -195,10 +195,10 @@
   color: var(--text-primary);
 }
 
-.language-select-wrapper {
-  position: relative;
+.language-btn {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.75rem;
   padding: 0.6rem 0.9rem;
   color: var(--text-secondary);
@@ -211,82 +211,59 @@
   transition: all 0.2s;
   white-space: nowrap;
   overflow: hidden;
+  width: 100%;
+  text-align: left;
 }
 
-.language-select-wrapper:hover {
+.sidebar.collapsed .language-btn {
+  justify-content: center;
+  padding: 0.6rem;
+}
+
+.language-btn:hover {
   background: var(--bg-light);
   color: var(--text-primary);
 }
 
-.language-icon {
-  flex-shrink: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.language-select {
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: 1.2rem;
-  padding-left: 0;
-  z-index: 2;
-}
-
-.language-select option {
+.language-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 9999;
   background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+  min-width: 120px;
+}
+
+[dir="rtl"] .language-dropdown {
+  left: 0;
+  right: 0;
+}
+
+.language-option {
+  padding: 0.5rem 0.75rem;
+  border-radius: calc(var(--radius) / 2);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.language-option:hover {
+  background: var(--bg-light);
   color: var(--text-primary);
 }
 
-.language-arrow {
-  position: absolute;
-  right: 0.9rem;
-  font-size: 0.6rem;
-  color: var(--text-muted);
-  pointer-events: none;
-  transition: transform 0.2s;
-  z-index: 1;
-}
-
-/* RTL styles */
-[dir="rtl"] .language-select {
-  padding-right: 0;
-  padding-left: 1.2rem;
-}
-
-[dir="rtl"] .language-arrow {
-  right: auto;
-  left: 0.9rem;
-}
-
-/* Collapsed sidebar styles */
-.sidebar.collapsed .language-select-wrapper {
-  justify-content: center;
-  padding: 0.6rem;
-  width: auto;
-  overflow: visible;
-}
-
-.sidebar.collapsed .language-select {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-}
-
-.sidebar.collapsed .language-arrow {
-  display: none;
+.language-option.active {
+  background: rgba(37, 211, 102, 0.1);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .logout-btn {
