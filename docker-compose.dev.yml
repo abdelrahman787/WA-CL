@@ -12,6 +12,7 @@ services:
       - '127.0.0.1:2785:2785'
     environment:
       - NODE_ENV=development
+      - ALLOW_DEV_API_KEY=true
       - PORT=2785
       - DATABASE_TYPE=sqlite
       - DATABASE_NAME=/app/data/openwa.sqlite
