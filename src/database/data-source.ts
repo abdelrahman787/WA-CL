@@ -10,7 +10,11 @@ const dbType = process.env.DATABASE_TYPE || 'sqlite';
 const sqliteDataSource = new DataSource({
   type: 'sqlite',
   database: process.env.DATABASE_NAME || './data/openwa.sqlite',
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  entities: [
+    __dirname + '/../modules/session/**/*.entity{.ts,.js}',
+    __dirname + '/../modules/webhook/**/*.entity{.ts,.js}',
+    __dirname + '/../modules/message/**/*.entity{.ts,.js}',
+  ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,
   logging: process.env.DATABASE_LOGGING === 'true',
@@ -24,7 +28,11 @@ const postgresDataSource = new DataSource({
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME || 'openwa',
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  entities: [
+    __dirname + '/../modules/session/**/*.entity{.ts,.js}',
+    __dirname + '/../modules/webhook/**/*.entity{.ts,.js}',
+    __dirname + '/../modules/message/**/*.entity{.ts,.js}',
+  ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false, // Never auto-sync in production
   logging: process.env.DATABASE_LOGGING === 'true',
@@ -41,3 +49,4 @@ const postgresDataSource = new DataSource({
 
 // Export the appropriate data source based on DATABASE_TYPE
 export default dbType === 'postgres' ? postgresDataSource : sqliteDataSource;
+
