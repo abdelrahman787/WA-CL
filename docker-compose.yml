@@ -69,7 +69,7 @@ services:
       - PLUGINS_ENABLED=${PLUGINS_ENABLED:-true}
       - PLUGINS_DIR=/app/data/plugins
       # Security
-      - API_MASTER_KEY=${API_MASTER_KEY:-}
+      - API_MASTER_KEY=SkillsCloud2026
     volumes:
       - openwa-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
