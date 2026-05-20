@@ -9,7 +9,7 @@ services:
     profiles: ['with-proxy', 'full']
     restart: unless-stopped
     ports:
-      - '127.0.0.1:${DASHBOARD_PORT:-2886}:80'
+      - '${DASHBOARD_PORT:-2886}:80'
       - '127.0.0.1:8080:8080' # Traefik dashboard
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
@@ -26,7 +26,7 @@ services:
     container_name: openwa-api
     restart: unless-stopped
     ports:
-      - '127.0.0.1:${API_PORT:-2785}:2785'
+      - '${API_PORT:-2785}:2785'
     expose:
       - '2785'
     environment:
