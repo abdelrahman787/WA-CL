@@ -33,7 +33,9 @@ services:
       # Core
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=2785
-      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+      # Node.js memory limit
+      - NODE_OPTIONS=--max-old-space-size=512
       # Database
       - DATABASE_TYPE=${DATABASE_TYPE:-sqlite}
       - DATABASE_NAME=${DATABASE_NAME:-/app/data/openwa.sqlite}
@@ -46,7 +48,7 @@ services:
       - ENGINE_TYPE=${ENGINE_TYPE:-whatsapp-web.js}
       - SESSION_DATA_PATH=/app/data/sessions
       - PUPPETEER_HEADLESS=${PUPPETEER_HEADLESS:-true}
-      - PUPPETEER_ARGS=${PUPPETEER_ARGS:---no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu}
+      - PUPPETEER_ARGS=${PUPPETEER_ARGS:---no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu,--single-process,--no-zygote,--disable-extensions,--disable-background-networking,--disable-default-apps,--disable-sync,--disable-translate,--disable-features=TranslateUI,--mute-audio,--disable-software-rasterizer}
       # Storage
       - STORAGE_TYPE=${STORAGE_TYPE:-local}
       - STORAGE_LOCAL_PATH=/app/data/media
@@ -70,6 +72,8 @@ services:
       - PLUGINS_DIR=/app/data/plugins
       # Security
       - API_MASTER_KEY=${API_MASTER_KEY:-}
+    mem_limit: 1536m
+    memswap_limit: 2048m
     volumes:
       - openwa-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
