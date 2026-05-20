@@ -359,7 +359,12 @@
       "messageId": "מזהה הודעה",
       "error": "שגיאה"
     },
-    "sendFailed": "שליחת ההודעה נכשלה"
+    "sendFailed": "שליחת ההודעה נכשלה",
+    "copyGroupId": "העתק מזהה",
+    "copyGroupIdSuccessTitle": "המזהה הועתק",
+    "copyGroupIdSuccessMessage": "מזהה הקבוצה שנבחרה הועתק ללוח.",
+    "copyGroupIdFailedTitle": "העתקה נכשלה",
+    "copyGroupIdFailedMessage": "לא ניתן להעתיק את מזהה הקבוצה הנבחר. נסה שוב."
   },
   "infrastructure": {
     "title": "תשתית",

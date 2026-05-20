@@ -359,7 +359,12 @@
       "messageId": "Message ID",
       "error": "Error"
     },
-    "sendFailed": "Failed to send message"
+    "sendFailed": "Failed to send message",
+    "copyGroupId": "Copy ID",
+    "copyGroupIdSuccessTitle": "Group ID Copied",
+    "copyGroupIdSuccessMessage": "The selected group ID was copied to the clipboard.",
+    "copyGroupIdFailedTitle": "Copy Failed",
+    "copyGroupIdFailedMessage": "Unable to copy the selected group ID. Please try again."
   },
   "infrastructure": {
     "title": "Infrastructure",

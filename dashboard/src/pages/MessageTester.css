@@ -135,6 +135,11 @@
   cursor: not-allowed;
 }
 
+.copy-btn {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
 .response-status {
   display: flex;
   align-items: center;
