@@ -60,7 +60,7 @@ Built on a **pluggable architecture**, OpenWA lets you swap database engines (SQ
 
 | Feature           | Status | Description                      |
 | ----------------- | ------ | -------------------------------- |
-| Text Messages     | ✅     | Send/receive text messages       |
+| Text Messages     | ✅     | Send/receive text messages with link preview |
 | Media Messages    | ✅     | Images, videos, documents, audio |
 | Message Reactions | ✅     | React to messages with emoji     |
 | Bulk Messaging    | ✅     | Send to multiple recipients      |
@@ -281,6 +281,14 @@ Comprehensive documentation is available in the `docs/` folder:
 | [API Spec](./docs/06-api-specification.md)              | Complete API reference       |
 | [Development](./docs/08-development-guidelines.md)      | Coding standards             |
 | [Migration Guide](./docs/14-migration-guide.md)         | Database & storage migration |
+
+---
+
+## 📝 Changelog
+
+### v0.1.7
+- **Link Preview**: Text messages containing URLs now automatically generate WhatsApp link preview cards (`linkPreview: true`)
+- **HTTP Compatibility**: Dashboard now works when accessed via HTTP (non-secure context) — `crypto.randomUUID` fallback added for environments without HTTPS
 
 ---
 
