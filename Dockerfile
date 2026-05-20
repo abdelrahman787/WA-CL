@@ -26,7 +26,7 @@ COPY . .
 RUN npm run build
 
 # ===== Stage 2: Production =====
-FROM node:22-slim AS production
+FROM node:20-bookworm-slim AS production
 
 # Install Chrome/Chromium and required dependencies
 RUN apt-get update && apt-get install -y \
