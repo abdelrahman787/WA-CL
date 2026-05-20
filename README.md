@@ -16,12 +16,13 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.6-blue.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.2.1-blue.svg" alt="Version"/>
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"/>
   <img src="https://img.shields.io/badge/node-22_LTS-brightgreen.svg" alt="Node"/>
   <img src="https://img.shields.io/badge/NestJS-11.x-red.svg" alt="NestJS"/>
   <img src="https://img.shields.io/badge/docker-ready-blue.svg" alt="Docker"/>
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6.svg" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/Docker%20Hub-3bsalam%2Fopenwa-blue?logo=docker" alt="Docker Hub"/>
 </p>
 
 ---
@@ -94,11 +95,53 @@ Built on a **pluggable architecture**, OpenWA lets you swap database engines (SQ
 
 ## 🚀 Quick Start
 
-### Option A: Docker (Recommended)
+### Option A: Docker Hub — Pre-built Images (Fastest)
+
+No need to clone or build. Three commands and you're running:
+
+```bash
+# 1. Create a project folder
+mkdir openwa && cd openwa
+
+# 2. Download the compose file and default config
+curl -o docker-compose.hub.yml https://raw.githubusercontent.com/3bsalam-1/OpenWA/main/docker-compose.hub.yml
+curl -o .env https://raw.githubusercontent.com/3bsalam-1/OpenWA/main/.env.example
+
+# 3. (Optional) Edit .env to customise ports, database, storage, etc.
+#    nano .env
+
+# 4. Start
+docker compose -f docker-compose.hub.yml up -d
+```
+
+Once running:
+
+| URL | Description |
+| --- | --- |
+| `http://localhost:2886` | Dashboard |
+| `http://localhost:2785/api` | REST API |
+| `http://localhost:2785/api/docs` | Swagger docs |
+
+The API key is printed in the container logs on first boot:
+
+```bash
+docker logs openwa-api | grep "API Key"
+```
+
+**Available images:**
+
+| Image | Tag |
+| --- | --- |
+| `3bsalam/openwa-api` | `latest`, `0.2.1` |
+| `3bsalam/openwa-dashboard` | `latest`, `0.2.1` |
+
+---
+
+### Option B: Build from Source
 
 ```bash
 # Clone and start
-git clone https://github.com/rmyndharis/OpenWA.git
+git clone https://github.com/3bsalam-1/OpenWA.git
 cd OpenWA
 docker compose -f docker-compose.dev.yml up -d
 
@@ -108,11 +151,22 @@ docker compose -f docker-compose.dev.yml up -d
 # Swagger: http://localhost:2785/api/docs
 ```
 
-### Option B: Local Development
+> **Using Podman instead of Docker?**
+> Podman rootless mode requires the socket to be running and `DOCKER_HOST` to be set:
+>
+> ```bash
+> systemctl --user start podman.socket
+> systemctl --user enable podman.socket
+> export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+> ```
+>
+> Add the `export` line to your `~/.bashrc` to make it permanent.
+
+### Option C: Local Development
 
 ```bash
 # Clone repository
-git clone https://github.com/rmyndharis/OpenWA.git
+git clone https://github.com/3bsalam-1/OpenWA.git
 cd OpenWA
 
 # Install dependencies (includes dashboard)

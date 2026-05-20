@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-18
+
+### Fixed
+
+- **Podman compatibility — Docker socket**: `docker compose` failed with `FileNotFoundError` because the
+  Podman socket (`/run/user/<uid>/podman/podman.sock`) was inactive. Fix: enable and start
+  `systemctl --user start podman.socket` and export
+  `DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock`.
+- **Podman compatibility — unqualified image names**: Podman rootless mode does not resolve short image
+  names without a registry prefix. Updated all `FROM` directives in `Dockerfile` and
+  `dashboard/Dockerfile` to use fully-qualified names (`docker.io/node:22-slim`,
+  `docker.io/node:20-alpine`, `docker.io/nginx:alpine`).
+- **Healthcheck crash on Node 22**: `node -e "require('http').get(..., (r) => ...)"` failed inside the
+  container because Node 22 routes `node -e` through its TypeScript evaluator (`evalTypeScript`) which
+  rejects arrow-function syntax, and Podman further splits the quoted shell command on whitespace causing
+  `SyntaxError: Unexpected end of input`. Fixed by installing `curl` in the production stage and
+  replacing both the `Dockerfile` `HEALTHCHECK` and the `docker-compose.dev.yml` `test` with
+  `curl -f http://localhost:2785/api/health`.
+
+### Changed
+
+- **Dockerfile** (`production` stage): Added `curl` to `apt-get install` for use by the healthcheck.
+- **docker-compose.dev.yml**: Simplified healthcheck `test` from a multi-token `node -e` array to
+  `['CMD', 'curl', '-f', 'http://localhost:2785/api/health']`.
+
 ## [0.1.6] - 2026-05-17
 
 ### Fixed
