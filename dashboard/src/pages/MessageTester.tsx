@@ -6,6 +6,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useRole } from '../hooks/useRole';
 import { useSessionsQuery, useSessionGroupsQuery } from '../hooks/queries';
 import { PageHeader } from '../components/PageHeader';
+import { useToast } from '../components/Toast';
 import './MessageTester.css';
 
 interface ApiResponse {
@@ -32,6 +33,7 @@ export function MessageTester() {
   const [mediaUrl, setMediaUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<ApiResponse | null>(null);
+  const toast = useToast();
 
   const { data: groups = [], isLoading: loadingGroups } = useSessionGroupsQuery(
     session,
@@ -52,6 +54,22 @@ export function MessageTester() {
       setSelectedGroup('');
     }
   }, [groups, selectedGroup, recipientType]);
+
+  const handleCopyGroupId = async () => {
+    if (!selectedGroup) return;
+
+    if (!navigator.clipboard?.writeText) {
+      toast.error(t('messageTester.copyGroupIdFailedTitle'), t('messageTester.copyGroupIdFailedMessage'));
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(selectedGroup);
+      toast.success(t('messageTester.copyGroupIdSuccessTitle'), t('messageTester.copyGroupIdSuccessMessage'));
+    } catch {
+      toast.error(t('messageTester.copyGroupIdFailedTitle'), t('messageTester.copyGroupIdFailedMessage'));
+    }
+  };
 
   const handleSend = async () => {
     const targetId = recipientType === 'group' ? selectedGroup : recipient;
@@ -141,19 +159,31 @@ export function MessageTester() {
             <label>{recipientType === 'group' ? t('messageTester.selectGroup') : t('messageTester.recipientPhone')}</label>
             {recipientType === 'group' ? (
               <>
-                <select
-                  value={selectedGroup}
-                  onChange={e => setSelectedGroup(e.target.value)}
-                  disabled={loadingGroups || groups.length === 0}
-                >
-                  {loadingGroups && <option value="">{t('messageTester.loadingGroups')}</option>}
-                  {!loadingGroups && groups.length === 0 && <option value="">{t('messageTester.noGroupsFound')}</option>}
-                  {groups.map(g => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <select
+                    value={selectedGroup}
+                    onChange={e => setSelectedGroup(e.target.value)}
+                    disabled={loadingGroups || groups.length === 0}
+                  >
+                    {loadingGroups && <option value="">{t('messageTester.loadingGroups')}</option>}
+                    {!loadingGroups && groups.length === 0 && <option value="">{t('messageTester.noGroupsFound')}</option>}
+                    {groups.map(g => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                  {groups.length > 0 &&
+                    <button
+                      type="button"
+                      className="copy-btn"
+                      onClick={handleCopyGroupId}
+                      disabled={!selectedGroup}
+                    >
+                      {t('messageTester.copyGroupId')}
+                    </button>
+                  }
+                </div>
                 <span className="hint">{t('messageTester.selectGroupHint')}</span>
               </>
             ) : (
