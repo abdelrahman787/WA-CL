@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { type UserRole } from '../hooks/useRole';
-import { supportedLanguages, type SupportedLanguage } from '../i18n';
+import { type SupportedLanguage } from '../i18n';
 import './Layout.css';
 
 interface LayoutProps {
@@ -54,6 +54,7 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -76,17 +77,34 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
     };
   }, [isMobileOpen]);
 
+  useEffect(() => {
+    if (!showLangDropdown) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.language-wrapper')) {
+        setShowLangDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [showLangDropdown]);
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
 
   const currentLang = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0] as SupportedLanguage;
-  const cycleLanguage = () => {
-    const idx = supportedLanguages.indexOf(currentLang);
-    const next = supportedLanguages[(idx + 1) % supportedLanguages.length];
-    void i18n.changeLanguage(next);
+  const handleLanguageChange = (lang: string) => {
+    void i18n.changeLanguage(lang);
   };
-  const languageLabel = currentLang === 'he' ? 'עברית' : 'EN';
-  const isRtl = currentLang === 'he';
+  const languageLabels: Record<SupportedLanguage, string> = {
+    en: 'English',
+    ar: 'العربية',
+    he: 'עברית',
+    zh: '中文',
+    es: 'Español',
+  };
+  const languageLabel = languageLabels[currentLang] ?? 'EN';
+  const isRtl = currentLang === 'he' || currentLang === 'ar';
 
   return (
     <div className="layout">
@@ -151,15 +169,32 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
         </nav>
 
         <div className="sidebar-footer">
-          <button
-            className="theme-toggle-btn"
-            onClick={cycleLanguage}
-            title={t('common.language')}
-            aria-label={t('common.language')}
-          >
-            <Languages size={18} />
-            {!isCollapsed && <span>{languageLabel}</span>}
-          </button>
+          <div className="language-wrapper" style={{ position: 'relative' }}>
+            <button
+              className="language-btn"
+              onClick={() => setShowLangDropdown(!showLangDropdown)}
+              title={t('common.language')}
+            >
+              <Languages size={18} />
+              {!isCollapsed && <span>{languageLabel}</span>}
+            </button>
+            {showLangDropdown && !isCollapsed && (
+              <div className="language-dropdown">
+                {(['en', 'ar', 'es', 'zh', 'he'] as SupportedLanguage[]).map(lang => (
+                  <div
+                    key={lang}
+                    className={`language-option ${currentLang === lang ? 'active' : ''}`}
+                    onClick={() => {
+                      handleLanguageChange(lang);
+                      setShowLangDropdown(false);
+                    }}
+                  >
+                    {languageLabels[lang]}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
