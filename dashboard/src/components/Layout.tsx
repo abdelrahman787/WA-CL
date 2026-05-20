@@ -54,6 +54,7 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -76,6 +77,18 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
     };
   }, [isMobileOpen]);
 
+  useEffect(() => {
+    if (!showLangDropdown) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.language-wrapper')) {
+        setShowLangDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [showLangDropdown]);
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
 
@@ -84,12 +97,14 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
     void i18n.changeLanguage(lang);
   };
   const languageLabels: Record<SupportedLanguage, string> = {
-    en: 'EN',
+    en: 'English',
+    ar: 'العربية',
     he: 'עברית',
     zh: '中文',
+    es: 'Español',
   };
   const languageLabel = languageLabels[currentLang] ?? 'EN';
-  const isRtl = currentLang === 'he';
+  const isRtl = currentLang === 'he' || currentLang === 'ar';
 
   return (
     <div className="layout">
@@ -154,20 +169,31 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="language-select-wrapper" title={t('common.language')}>
-            <Languages size={18} className="language-icon" />
-            <select
-              value={currentLang}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="language-select"
-              aria-label={t('common.language')}
+          <div className="language-wrapper" style={{ position: 'relative' }}>
+            <button
+              className="language-btn"
+              onClick={() => setShowLangDropdown(!showLangDropdown)}
+              title={t('common.language')}
             >
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="zh">中文</option>
-              <option value="he">עברית</option>
-            </select>
-            {!isCollapsed && <span className="language-arrow">▼</span>}
+              <Languages size={18} />
+              {!isCollapsed && <span>{languageLabel}</span>}
+            </button>
+            {showLangDropdown && !isCollapsed && (
+              <div className="language-dropdown">
+                {(['en', 'ar', 'es', 'zh', 'he'] as SupportedLanguage[]).map(lang => (
+                  <div
+                    key={lang}
+                    className={`language-option ${currentLang === lang ? 'active' : ''}`}
+                    onClick={() => {
+                      handleLanguageChange(lang);
+                      setShowLangDropdown(false);
+                    }}
+                  >
+                    {languageLabels[lang]}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button
             className="theme-toggle-btn"
