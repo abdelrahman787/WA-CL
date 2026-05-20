@@ -11,13 +11,16 @@ import { HookManager } from '../../core/hooks';
 import { QUEUE_NAMES } from '../queue/queue-names';
 import { Session } from '../session/entities/session.entity';
 
+const TEST_WEBHOOK_SECRET =
+  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
 function createMockWebhook(overrides: Partial<Webhook> = {}): Webhook {
   return {
     id: 'wh-uuid-1',
     sessionId: 'sess-1',
     url: 'https://example.com/webhook',
     events: ['message.received'],
-    secret: null,
+    secret: TEST_WEBHOOK_SECRET,
     headers: {},
     active: true,
     retryCount: 3,
@@ -47,10 +50,12 @@ describe('WebhookService', () => {
     };
 
     configService = {
-      get: jest.fn().mockImplementation(<T>(key: string, def?: T): T | boolean | number => {
+      get: jest.fn().mockImplementation(<T>(key: string, def?: T): T | boolean | number | string => {
         if (key === 'queue.enabled') return false;
         if (key === 'webhook.retryDelay') return 100;
         if (key === 'webhook.timeout') return 10000;
+        if (key === 'webhook.defaultSecret') return TEST_WEBHOOK_SECRET;
+        if (key === 'webhook.requireSecret') return false;
         return def as T;
       }),
     };
@@ -103,7 +108,7 @@ describe('WebhookService', () => {
     it('should create webhook with custom events and secret', async () => {
       const webhook = createMockWebhook({
         events: ['*'],
-        secret: 'my-secret',
+        secret: TEST_WEBHOOK_SECRET,
       });
       (repository.create as jest.Mock).mockReturnValue(webhook);
       (repository.save as jest.Mock).mockResolvedValue(webhook);
@@ -111,13 +116,13 @@ describe('WebhookService', () => {
       await service.create('sess-1', {
         url: 'https://example.com/webhook',
         events: ['*'],
-        secret: 'my-secret',
+        secret: TEST_WEBHOOK_SECRET,
       });
 
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           events: ['*'],
-          secret: 'my-secret',
+          secret: TEST_WEBHOOK_SECRET,
         }),
       );
     });
@@ -291,7 +296,7 @@ describe('WebhookService', () => {
     it('should produce valid HMAC-SHA256 signature', async () => {
       const webhook = createMockWebhook({
         events: ['message.received'],
-        secret: 'test-secret-123',
+        secret: TEST_WEBHOOK_SECRET,
       });
       (repository.find as jest.Mock).mockResolvedValue([webhook]);
       (repository.update as jest.Mock).mockResolvedValue({ affected: 1 });
@@ -334,7 +339,7 @@ describe('WebhookService', () => {
         idempotencyKey: 'k',
         deliveryId: 'd',
       });
-      const expected = `sha256=${crypto.createHmac('sha256', 'test-secret-123').update(body).digest('hex')}`;
+      const expected = `sha256=${crypto.createHmac('sha256', TEST_WEBHOOK_SECRET).update(body).digest('hex')}`;
       expect(capturedHeaders['X-OpenWA-Signature']).toBe(expected);
 
       mockFetch.mockReset();

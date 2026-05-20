@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException, OnModuleInit } fr
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
+import { secureCompare } from '../../common/security/secure-compare.util';
 import { existsSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { ApiKey, ApiKeyRole } from './entities/api-key.entity';
@@ -26,18 +27,23 @@ export class AuthService implements OnModuleInit {
     let isNewKey = false;
 
     if (count === 0) {
-      // Use predictable key in development, random key in production
-      displayKey =
-        process.env.NODE_ENV === 'production' ? `owa_k1_${randomBytes(32).toString('hex')}` : 'dev-admin-key';
-
-      await this.seedApiKey(displayKey, 'Default Admin Key', ApiKeyRole.ADMIN);
+      const masterKey = process.env.API_MASTER_KEY?.trim();
+      if (masterKey) {
+        displayKey = masterKey;
+        await this.seedApiKey(masterKey, 'Master API Key (from API_MASTER_KEY)', ApiKeyRole.ADMIN);
+      } else {
+        displayKey =
+          process.env.NODE_ENV === 'production' ? `owa_k1_${randomBytes(32).toString('hex')}` : 'dev-admin-key';
+        await this.seedApiKey(displayKey, 'Default Admin Key', ApiKeyRole.ADMIN);
+      }
       isNewKey = true;
 
-      // Save raw key to file for startup script to read
-      try {
-        writeFileSync(API_KEY_FILE, displayKey, 'utf-8');
-      } catch (err) {
-        this.logger.warn('Could not save API key file', { error: String(err) });
+      if (process.env.NODE_ENV !== 'production') {
+        try {
+          writeFileSync(API_KEY_FILE, displayKey, 'utf-8');
+        } catch (err) {
+          this.logger.warn('Could not save API key file', { error: String(err) });
+        }
       }
     } else {
       // Read saved API key from file if exists
@@ -158,6 +164,11 @@ export class AuthService implements OnModuleInit {
   }
 
   async validateApiKey(rawKey: string, clientIp?: string, sessionId?: string): Promise<ApiKey> {
+    const masterKey = process.env.API_MASTER_KEY?.trim();
+    if (masterKey && secureCompare(rawKey, masterKey)) {
+      return this.buildMasterKeyPrincipal();
+    }
+
     const keyHash = this.hashKey(rawKey);
     const apiKey = await this.apiKeyRepository.findOne({ where: { keyHash } });
 
@@ -201,6 +212,26 @@ export class AuthService implements OnModuleInit {
 
   private hashKey(rawKey: string): string {
     return createHash('sha256').update(rawKey).digest('hex');
+  }
+
+  /** In-memory principal for API_MASTER_KEY (not persisted). */
+  private buildMasterKeyPrincipal(): ApiKey {
+    const now = new Date();
+    return {
+      id: 'api-master-key',
+      name: 'API Master Key',
+      keyHash: '',
+      keyPrefix: 'master',
+      role: ApiKeyRole.ADMIN,
+      allowedIps: null,
+      allowedSessions: null,
+      isActive: true,
+      expiresAt: null,
+      lastUsedAt: now,
+      usageCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    } as ApiKey;
   }
 
   private isIpAllowed(clientIp: string, allowedIps: string[]): boolean {

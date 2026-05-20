@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { ShutdownService } from './common/services/shutdown.service';
 import * as dotenv from 'dotenv';
@@ -65,7 +67,18 @@ STORAGE_PATH=./data/media
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const bodySizeLimit = process.env.BODY_SIZE_LIMIT || '5mb';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  const httpAdapter = app.getHttpAdapter().getInstance();
+  if (process.env.TRUST_PROXY !== 'false') {
+    httpAdapter.set('trust proxy', process.env.TRUST_PROXY === 'true' ? true : 1);
+  }
+
+  app.use(json({ limit: bodySizeLimit }));
+  app.use(urlencoded({ extended: true, limit: bodySizeLimit }));
 
   // Enable shutdown hooks for graceful shutdown
   app.enableShutdownHooks();
@@ -103,14 +116,19 @@ async function bootstrap() {
     }),
   );
 
-  // CORS Configuration (Phase 3 Security Audit)
-  const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()) || ['*'];
+  // CORS — restrict to trusted origins (wildcard disabled in production)
+  const corsEnv = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean) || [];
+  const allowsWildcard = corsEnv.includes('*');
+  if (isProduction && allowsWildcard) {
+    console.warn('[Bootstrap] CORS_ORIGINS=* is not allowed in production; using same-origin only.');
+  }
+  const allowedOrigins = isProduction && allowsWildcard ? [] : corsEnv.length > 0 ? corsEnv : ['*'];
+
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (mobile apps, Postman, server-to-server)
       if (!origin) return callback(null, true);
 
-      // Check if wildcard or origin matches
       if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -140,30 +158,36 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('OpenWA API')
-    .setDescription('Open Source WhatsApp API Gateway - Free, Self-Hosted HTTP API')
-    .setVersion('0.1.6')
-    .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, 'X-API-Key')
-    .addTag('sessions', 'WhatsApp session management')
-    .addTag('messages', 'Send and manage messages')
-    .addTag('webhooks', 'Webhook configuration')
-    .addTag('contacts', 'Contact management')
-    .addTag('groups', 'Group management')
-    .addTag('labels', 'Label management (WhatsApp Business)')
-    .addTag('channels', 'Channel/Newsletter management')
-    .addTag('health', 'Health check endpoints')
-    .build();
+  const configService = app.get(ConfigService);
+  const enableSwagger = configService.get<boolean>('security.enableSwagger', true);
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  if (enableSwagger) {
+    const config = new DocumentBuilder()
+      .setTitle('OpenWA API')
+      .setDescription('Open Source WhatsApp API Gateway - Free, Self-Hosted HTTP API')
+      .setVersion('0.1.6')
+      .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, 'X-API-Key')
+      .addTag('sessions', 'WhatsApp session management')
+      .addTag('messages', 'Send and manage messages')
+      .addTag('webhooks', 'Webhook configuration')
+      .addTag('contacts', 'Contact management')
+      .addTag('groups', 'Group management')
+      .addTag('labels', 'Label management (WhatsApp Business)')
+      .addTag('channels', 'Channel/Newsletter management')
+      .addTag('health', 'Health check endpoints')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 2785;
   await app.listen(port);
 
   console.log(`🚀 OpenWA is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
+  if (enableSwagger) {
+    console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
+  }
 }
 
 void bootstrap();

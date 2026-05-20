@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsUrl, IsArray, IsOptional, IsBoolean, IsInt, Min, Max, ArrayMinSize } from 'class-validator';
+import {
+  IsString,
+  IsUrl,
+  IsArray,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+  MinLength,
+  ArrayMinSize,
+} from 'class-validator';
 
 export const WEBHOOK_EVENTS = [
   'message.received',
@@ -41,6 +52,7 @@ export class CreateWebhookDto {
   })
   @IsOptional()
   @IsString()
+  @MinLength(32)
   secret?: string;
 
   @ApiPropertyOptional({
@@ -77,6 +89,7 @@ export class UpdateWebhookDto {
   @ApiPropertyOptional({ description: 'Secret key for HMAC signature' })
   @IsOptional()
   @IsString()
+  @MinLength(32)
   secret?: string;
 
   @ApiPropertyOptional({ description: 'Custom headers' })

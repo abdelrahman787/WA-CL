@@ -60,6 +60,16 @@ export default () => ({
     timeout: parseInt(process.env.WEBHOOK_TIMEOUT || '10000', 10),
     maxRetries: parseInt(process.env.WEBHOOK_MAX_RETRIES || '3', 10),
     retryDelay: parseInt(process.env.WEBHOOK_RETRY_DELAY || '5000', 10),
+    defaultSecret: process.env.WEBHOOK_SECRET,
+    requireSecret: process.env.WEBHOOK_REQUIRE_SECRET === 'true' || process.env.NODE_ENV === 'production',
+  },
+
+  // Security
+  security: {
+    apiMasterKey: process.env.API_MASTER_KEY,
+    bodySizeLimit: process.env.BODY_SIZE_LIMIT || '5mb',
+    trustProxy: process.env.TRUST_PROXY !== 'false',
+    enableSwagger: process.env.ENABLE_SWAGGER !== 'false',
   },
 
   // API configuration
