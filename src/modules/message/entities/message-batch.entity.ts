@@ -63,6 +63,8 @@ export class MessageBatch {
     delayBetweenMessages: number;
     randomizeDelay: boolean;
     stopOnError: boolean;
+    humanize?: boolean;
+    typingSpeed?: 'slow' | 'normal' | 'fast';
   };
 
   @Column({ type: jsonColumnType(), nullable: true })

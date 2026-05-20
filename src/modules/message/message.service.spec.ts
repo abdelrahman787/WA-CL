@@ -6,6 +6,7 @@ import { MessageService } from './message.service';
 import { Message, MessageDirection, MessageStatus } from './entities/message.entity';
 import { SessionService } from '../session/session.service';
 import { HookManager } from '../../core/hooks';
+import { HumanizeService } from './humanize.service';
 
 const mockEngineResult = { id: 'wa-msg-1', timestamp: 1706868000 };
 
@@ -24,6 +25,8 @@ function createMockEngine() {
     reactToMessage: jest.fn().mockResolvedValue(undefined),
     getMessageReactions: jest.fn().mockResolvedValue([]),
     deleteMessage: jest.fn().mockResolvedValue(undefined),
+    simulateTyping: jest.fn().mockResolvedValue(undefined),
+    simulateRecording: jest.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -55,12 +58,18 @@ describe('MessageService', () => {
       }),
     };
 
+    const humanizeService = {
+      simulateHumanTyping: jest.fn().mockResolvedValue(undefined),
+      calculateTypingDelay: jest.fn().mockReturnValue(1000),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessageService,
         { provide: getRepositoryToken(Message, 'data'), useValue: repository },
         { provide: SessionService, useValue: sessionService },
         { provide: HookManager, useValue: hookManager },
+        { provide: HumanizeService, useValue: humanizeService },
       ],
     }).compile();
 

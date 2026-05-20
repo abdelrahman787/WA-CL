@@ -839,6 +839,22 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     return String(newCode);
   }
 
+  // ========== Humanize / Typing Simulation ==========
+
+  async simulateTyping(chatId: string): Promise<void> {
+    this.ensureReady();
+    const chat = await this.client!.getChatById(chatId);
+    await (chat as unknown as GroupChat).sendStateTyping();
+    this.logger.debug(`Typing indicator sent to ${chatId}`);
+  }
+
+  async simulateRecording(chatId: string): Promise<void> {
+    this.ensureReady();
+    const chat = await this.client!.getChatById(chatId);
+    await (chat as unknown as GroupChat).sendStateRecording();
+    this.logger.debug(`Recording indicator sent to ${chatId}`);
+  }
+
   // ========== Status/Stories (Phase 3) ==========
   // Note: These are stub implementations - whatsapp-web.js has limited Status API support
   /* eslint-disable @typescript-eslint/require-await, @typescript-eslint/no-unused-vars */

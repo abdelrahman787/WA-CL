@@ -2,7 +2,7 @@ import { Controller, Post, Get, Param, Body, Query, HttpCode, HttpStatus } from 
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { MessageService } from './message.service';
 import { BulkMessageService } from './bulk-message.service';
-import { SendTextMessageDto, SendMediaMessageDto, MessageResponseDto } from './dto';
+import { SendTextMessageDto, SendMediaMessageDto, MessageResponseDto, HumanizeOptionsDto } from './dto';
 import { SendBulkMessageDto, BulkMessageResponseDto } from './dto/bulk-message.dto';
 import { RequireRole } from '../auth/decorators/auth.decorators';
 import { ApiKeyRole } from '../auth/entities/api-key.entity';
@@ -197,7 +197,7 @@ export class MessageController {
   })
   async reply(
     @Param('sessionId') sessionId: string,
-    @Body() dto: { chatId: string; quotedMessageId: string; text: string },
+    @Body() dto: { chatId: string; quotedMessageId: string; text: string; humanize?: HumanizeOptionsDto },
   ): Promise<MessageResponseDto> {
     return this.messageService.reply(sessionId, dto);
   }
