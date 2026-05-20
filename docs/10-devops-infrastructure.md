@@ -787,14 +787,14 @@ receivers:
     slack_configs:
       - channel: '#openwa-critical'
         send_resolved: true
-        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        title: ' CRITICAL: {{ .GroupLabels.alertname }}'
         text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
 
   - name: 'slack-warnings'
     slack_configs:
       - channel: '#openwa-alerts'
         send_resolved: true
-        title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+        title: ' WARNING: {{ .GroupLabels.alertname }}'
 ```
 
 ### Health Check Endpoint

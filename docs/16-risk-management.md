@@ -122,14 +122,14 @@ const DEFAULT_SAFEGUARDS = {
 ```markdown
 ## Anti-Ban Best Practices
 
-### DO ✅
+### DO 
 - Warm up new numbers (normal usage for 1-2 weeks)
 - Use realistic delays between messages
 - Personalize messages (avoid identical content)
 - Respond to incoming messages
 - Use residential proxies if needed
 
-### DON'T ❌
+### DON'T 
 - Send bulk messages to unknown numbers
 - Use identical message templates
 - Send >100 messages/day on new numbers
@@ -675,7 +675,7 @@ flowchart LR
 ## Weekly Risk Report - Week XX
 
 ### Summary
-- Overall Risk Status: 🟢 Green / 🟡 Yellow / 🔴 Red
+- Overall Risk Status:  Green /  Yellow /  Red
 - New Risks Identified: X
 - Risks Mitigated: X
 - Active Incidents: X
@@ -684,9 +684,9 @@ flowchart LR
 
 | KRI | Target | Actual | Status |
 |-----|--------|--------|--------|
-| Error Rate | < 1% | X.XX% | 🟢/🟡/🔴 |
-| Uptime | > 99.5% | XX.XX% | 🟢/🟡/🔴 |
-| Response Time | < 500ms | XXXms | 🟢/🟡/🔴 |
+| Error Rate | < 1% | X.XX% | // |
+| Uptime | > 99.5% | XX.XX% | // |
+| Response Time | < 500ms | XXXms | // |
 
 ### Top Risks This Week
 
@@ -712,14 +712,14 @@ flowchart LR
 
 | ID | Risk | Probability | Impact | Level | Status |
 |----|------|-------------|--------|-------|--------|
-| R001 | Protocol Changes | High | High | 🔴 Critical | Monitoring |
-| R002 | Account Ban | Medium | Medium | 🟡 Medium | Mitigated |
-| R003 | Security Breach | Low | Critical | 🟡 Medium | Mitigated |
-| R004 | Maintainer Burnout | Medium | Medium | 🟡 Medium | Planning |
-| R005 | Dependency Issues | High | Medium | 🟡 Medium | Automated |
-| R006 | Legal Issues | Low | Critical | 🟡 Medium | Mitigated |
-| R007 | Rate Limiting | High | Medium | 🟡 Medium | Mitigated |
-| R008 | Data Loss | Low | High | 🟡 Medium | Mitigated |
+| R001 | Protocol Changes | High | High |  Critical | Monitoring |
+| R002 | Account Ban | Medium | Medium |  Medium | Mitigated |
+| R003 | Security Breach | Low | Critical |  Medium | Mitigated |
+| R004 | Maintainer Burnout | Medium | Medium |  Medium | Planning |
+| R005 | Dependency Issues | High | Medium |  Medium | Automated |
+| R006 | Legal Issues | Low | Critical |  Medium | Mitigated |
+| R007 | Rate Limiting | High | Medium |  Medium | Mitigated |
+| R008 | Data Loss | Low | High |  Medium | Mitigated |
 
 ### Risk Trend
 

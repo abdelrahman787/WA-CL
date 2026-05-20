@@ -42,16 +42,16 @@ timeline
 
 | Version | Focus                       | Status      |
 | ------- | --------------------------- | ----------- |
-| v0.0.1  | MVP - Basic API             | ✅ Released |
-| v0.0.2  | Production Ready            | ✅ Released |
-| v0.1.0  | Initial Stable Release      | ✅ Released |
-| v0.2.0  | SDK & Developer Tools       | 📋 Planned  |
-| v0.3.0  | Performance & Observability | 📋 Planned  |
-| v1.0.0  | Enterprise Ready            | 📋 Planned  |
+| v0.0.1  | MVP - Basic API             |  Released |
+| v0.0.2  | Production Ready            |  Released |
+| v0.1.0  | Initial Stable Release      |  Released |
+| v0.2.0  | SDK & Developer Tools       |  Planned  |
+| v0.3.0  | Performance & Observability |  Planned  |
+| v1.0.0  | Enterprise Ready            |  Planned  |
 
 ### Risk Buffer
 
-Each phase includes a 2–3 week buffer for:
+Each phase includes a 2-3 week buffer for:
 
 - Bug fixing and stabilization
 - WhatsApp protocol changes
@@ -149,18 +149,18 @@ gantt
 
 ```mermaid
 flowchart TB
-    subgraph HighRisk["⚠️ High Complexity Areas"]
+    subgraph HighRisk[" High Complexity Areas"]
         WW[whatsapp-web.js Integration]
         RC[Reconnection Logic]
         QR[QR Code Lifecycle]
     end
 
-    subgraph MediumRisk["⚡ Medium Complexity"]
+    subgraph MediumRisk[" Medium Complexity"]
         WH[Webhook Reliability]
         MD[Media Handling]
     end
 
-    subgraph LowRisk["✅ Low Complexity"]
+    subgraph LowRisk[" Low Complexity"]
         CRUD[Basic CRUD APIs]
         DOC[Documentation]
         DOCKER[Docker Setup]
@@ -182,38 +182,38 @@ flowchart TB
 
 | Feature            | Priority | Status |
 | ------------------ | -------- | ------ |
-| Create session     | P0       | ✅     |
-| Delete session     | P0       | ✅     |
-| Get session status | P0       | ✅     |
-| Generate QR code   | P0       | ✅     |
-| Session reconnect  | P1       | ✅     |
+| Create session     | P0       |      |
+| Delete session     | P0       |      |
+| Get session status | P0       |      |
+| Generate QR code   | P0       |      |
+| Session reconnect  | P1       |      |
 
 #### Basic Messaging
 
 | Feature           | Priority | Status |
 | ----------------- | -------- | ------ |
-| Send text message | P0       | ✅     |
-| Send image        | P0       | ✅     |
-| Send video        | P1       | ✅     |
-| Send audio        | P1       | ✅     |
-| Send document     | P1       | ✅     |
-| Receive messages  | P0       | ✅     |
+| Send text message | P0       |      |
+| Send image        | P0       |      |
+| Send video        | P1       |      |
+| Send audio        | P1       |      |
+| Send document     | P1       |      |
+| Receive messages  | P0       |      |
 
 #### Basic Webhooks
 
 | Feature          | Priority | Status |
 | ---------------- | -------- | ------ |
-| Webhook delivery | P0       | ✅     |
-| Webhook retry    | P0       | ✅     |
+| Webhook delivery | P0       |      |
+| Webhook retry    | P0       |      |
 
 #### Infrastructure
 
 | Feature        | Priority | Status |
 | -------------- | -------- | ------ |
-| SQLite storage | P0       | ✅     |
-| Docker support | P0       | ✅     |
-| Health check   | P1       | ✅     |
-| Swagger docs   | P0       | ✅     |
+| SQLite storage | P0       |      |
+| Docker support | P0       |      |
+| Health check   | P1       |      |
+| Swagger docs   | P0       |      |
 
 ### Deliverables
 
@@ -296,34 +296,34 @@ gantt
 
 | Feature            | Priority | Status |
 | ------------------ | -------- | ------ |
-| Multi-session      | P0       | ✅     |
-| Session isolation  | P0       | ✅     |
-| Proxy per session  | P1       | ✅     |
-| PostgreSQL support | P0       | ✅     |
-| Redis cache        | P1       | ✅     |
-| Job queue (Bull)   | P1       | ✅     |
-| Connection pooling | P1       | ✅     |
+| Multi-session      | P0       |      |
+| Session isolation  | P0       |      |
+| Proxy per session  | P1       |      |
+| PostgreSQL support | P0       |      |
+| Redis cache        | P1       |      |
+| Job queue (Bull)   | P1       |      |
+| Connection pooling | P1       |      |
 
 #### Security & Auth
 
 | Feature                | Priority | Status |
 | ---------------------- | -------- | ------ |
-| API key authentication | P0       | ✅     |
-| Rate limiting          | P0       | ✅     |
-| Permission system      | P1       | ✅     |
-| IP whitelisting        | P2       | ✅     |
-| Audit logging          | P2       | ✅     |
+| API key authentication | P0       |      |
+| Rate limiting          | P0       |      |
+| Permission system      | P1       |      |
+| IP whitelisting        | P2       |      |
+| Audit logging          | P2       |      |
 
 #### Dashboard
 
 | Feature               | Priority | Status |
 | --------------------- | -------- | ------ |
-| Web dashboard         | P0       | ✅     |
-| Session management UI | P0       | ✅     |
-| QR code display       | P0       | ✅     |
-| Webhook management UI | P1       | ✅     |
-| Logs viewer           | P1       | ✅     |
-| Test message sender   | P2       | ✅     |
+| Web dashboard         | P0       |      |
+| Session management UI | P0       |      |
+| QR code display       | P0       |      |
+| Webhook management UI | P1       |      |
+| Logs viewer           | P1       |      |
+| Test message sender   | P2       |      |
 
 ### Deliverables
 
@@ -398,37 +398,37 @@ gantt
 
 | Feature           | Priority | Status |
 | ----------------- | -------- | ------ |
-| Send location     | P1       | ✅     |
-| Send contact      | P1       | ✅     |
-| Send sticker      | P2       | ✅     |
-| Message reactions | P2       | ✅     |
-| Reply to message  | P1       | ✅     |
-| Forward message   | P1       | ✅     |
-| Message history   | P2       | ✅     |
+| Send location     | P1       |      |
+| Send contact      | P1       |      |
+| Send sticker      | P2       |      |
+| Message reactions | P2       |      |
+| Reply to message  | P1       |      |
+| Forward message   | P1       |      |
+| Message history   | P2       |      |
 
 #### Groups, Channels & Contacts
 
 | Feature             | Priority | Status |
 | ------------------- | -------- | ------ |
-| Groups API (full)   | P0       | ✅     |
-| Channels/Newsletter | P1       | ✅     |
-| Labels management   | P2       | ✅     |
-| Contact list API    | P1       | ✅     |
+| Groups API (full)   | P0       |      |
+| Channels/Newsletter | P1       |      |
+| Labels management   | P2       |      |
+| Contact list API    | P1       |      |
 
 #### Scaling & Infrastructure
 
 | Feature            | Priority | Status |
 | ------------------ | -------- | ------ |
-| Horizontal scaling | P2       | ✅     |
-| Session affinity   | P2       | ✅     |
-| Security audit     | P0       | ✅     |
+| Horizontal scaling | P2       |      |
+| Session affinity   | P2       |      |
+| Security audit     | P0       |      |
 
 #### Community & Tooling
 
 | Feature         | Priority | Status             |
 | --------------- | -------- | ------------------ |
-| n8n integration | P1       | ✅ (separate repo) |
-| CI/CD pipeline  | P0       | ✅                 |
+| n8n integration | P1       |  (separate repo) |
+| CI/CD pipeline  | P0       |                  |
 
 ### Deliverables
 
@@ -462,7 +462,7 @@ flowchart LR
         V002[v0.0.2 - Production Ready<br/>Multi-session & Dashboard]
     end
 
-    subgraph Current["✅ Current Release"]
+    subgraph Current[" Current Release"]
         V010[v0.1.0 - Initial Stable Release<br/>All Core Features]
     end
 
@@ -574,34 +574,34 @@ flowchart TB
 | Metric                     | Target    | Type     |
 | -------------------------- | --------- | -------- |
 | Core API endpoints working | 100%      | Internal |
-| Docker deployment works    | ✅        | Internal |
+| Docker deployment works    |         | Internal |
 | Single session stable      | 24+ hours | Internal |
 | Message delivery rate      | > 95%     | Internal |
 | API response time          | < 500ms   | Internal |
-| CI/CD pipeline operational | ✅        | Internal |
+| CI/CD pipeline operational |         | Internal |
 
 ### Phase 2 Success Criteria
 
 | Metric                | Target       | Actual            | Type     |
 | --------------------- | ------------ | ----------------- | -------- |
-| Multi-session support | 10+ sessions | ✅ Achieved       | Internal |
-| Dashboard functional  | All features | ✅ Achieved       | Internal |
-| PostgreSQL stable     | ✅           | ✅ Achieved       | Internal |
-| Webhook delivery rate | > 99%        | ✅ Achieved       | Internal |
-| Test coverage         | > 70%        | ⚠️ ~5% (deferred) | Internal |
-| GitHub stars          | 100+         | 📋 Pending        | External |
+| Multi-session support | 10+ sessions |  Achieved       | Internal |
+| Dashboard functional  | All features |  Achieved       | Internal |
+| PostgreSQL stable     |            |  Achieved       | Internal |
+| Webhook delivery rate | > 99%        |  Achieved       | Internal |
+| Test coverage         | > 70%        |  ~5% (deferred) | Internal |
+| GitHub stars          | 100+         |  Pending        | External |
 
 ### Phase 3 Success Criteria
 
 | Metric                        | Target  | Actual            | Type     |
 | ----------------------------- | ------- | ----------------- | -------- |
-| Feature parity with WAHA Plus | 90%+    | ✅ Achieved       | Internal |
-| API response time (p95)       | < 200ms | ✅ Achieved       | Internal |
-| Test coverage                 | > 80%   | ⚠️ ~5% (deferred) | Internal |
-| Documentation coverage        | 100%    | ✅ 95%+           | Internal |
-| Production users              | 50+     | 📋 Pending        | External |
-| GitHub stars                  | 500+    | 📋 Pending        | External |
-| Community contributors        | 5+      | 📋 Pending        | External |
+| Feature parity with WAHA Plus | 90%+    |  Achieved       | Internal |
+| API response time (p95)       | < 200ms |  Achieved       | Internal |
+| Test coverage                 | > 80%   |  ~5% (deferred) | Internal |
+| Documentation coverage        | 100%    |  95%+           | Internal |
+| Production users              | 50+     |  Pending        | External |
+| GitHub stars                  | 500+    |  Pending        | External |
+| Community contributors        | 5+      |  Pending        | External |
 
 ---
 

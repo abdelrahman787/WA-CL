@@ -10,11 +10,11 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      OpenWA Values                          │
 ├─────────────────────────────────────────────────────────────┤
-│  🆓 100% Free         │  No paywalled features               │
-│  📖 Open Source       │  MIT License, fork friendly          │
-│  🔒 Self-Hosted       │  Data stays on your own server       │
-│  🚀 Production Ready  │  Scalable & reliable                 │
-│  🎯 Developer First   │  Simple, intuitive API               │
+│   100% Free         │  No paywalled features               │
+│   Open Source       │  MIT License, fork friendly          │
+│   Self-Hosted       │  Data stays on your own server       │
+│   Production Ready  │  Scalable & reliable                 │
+│   Developer First   │  Simple, intuitive API               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -33,14 +33,14 @@ To become the most reliable open-source WhatsApp API gateway for production use.
 
 ```mermaid
 flowchart LR
-    subgraph Problems["❌ Current Problems"]
+    subgraph Problems[" Current Problems"]
         P1[Existing solutions are paid]
         P2[Critical features are paywalled]
         P3[Vendor lock-in]
         P4[Data privacy concerns]
     end
     
-    subgraph Solution["✅ OpenWA Solution"]
+    subgraph Solution[" OpenWA Solution"]
         S1[100% Free & Open Source]
         S2[All features included]
         S3[Self-hosted, no lock-in]
@@ -99,7 +99,7 @@ mindmap
 
 ## 1.5 Project Scope
 
-### In Scope ✅
+### In Scope 
 
 ```
 Phase 1 (MVP)
@@ -139,7 +139,7 @@ Phase 3 (Advanced)
 └── Metrics & monitoring
 ```
 
-### Out of Scope ❌
+### Out of Scope 
 
 - WhatsApp Business API (official Meta API)
 - Mobile app
@@ -205,13 +205,13 @@ quadrantChart
 | Feature | OpenWA | WAHA Core | WAHA Plus | Whapi.cloud |
 |---------|--------|-----------|-----------|-------------|
 | Price | Free | Free | $50+/mo | $30+/mo |
-| Open Source | ✅ | ❌ | ❌ | ❌ |
-| Multi-session | ✅ | Limited | ✅ | ✅ |
-| Dashboard | ✅ | ❌ | ✅ | ✅ |
-| PostgreSQL | ✅ | ❌ | ✅ | N/A |
-| Webhook UI | ✅ | ❌ | ✅ | ✅ |
-| Self-hosted | ✅ | ✅ | ✅ | ❌ |
-| Source code | ✅ | ❌ | ❌ | ❌ |
+| Open Source |  |  |  |  |
+| Multi-session |  | Limited |  |  |
+| Dashboard |  |  |  |  |
+| PostgreSQL |  |  |  | N/A |
+| Webhook UI |  |  |  |  |
+| Self-hosted |  |  |  |  |
+| Source code |  |  |  |  |
 
 ## 1.8 Technology Decisions
 

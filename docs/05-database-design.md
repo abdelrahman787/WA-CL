@@ -16,8 +16,8 @@ OpenWA supports two database backends that can be selected at deployment time:
 
 | Database       | Use Case                                    | Sessions | Horizontal Scaling |
 | -------------- | ------------------------------------------- | -------- | ------------------ |
-| **SQLite**     | Development, personal bot, low-resource VPS | 1-5      | ❌                 |
-| **PostgreSQL** | Production, multi-session, high volume      | 5+       | ✅                 |
+| **SQLite**     | Development, personal bot, low-resource VPS | 1-5      |                  |
+| **PostgreSQL** | Production, multi-session, high volume      | 5+       |                  |
 
 > [!NOTE]
 > **SQLite as a Production Option**

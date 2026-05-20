@@ -421,7 +421,7 @@ GET /api/sessions/:sessionId
 | `DISCONNECTED` | Connection lost or logged out |
 | `FAILED` | Fatal error, manual intervention required |
 
-**Internal ↔ API Status Mapping:**
+**Internal  API Status Mapping:**
 
 | Internal Status (engine/db) | API Status |
 |-----------------------------|------------|
@@ -1582,10 +1582,10 @@ http://localhost:2785/api/docs-json
 
 | Language | Package | Status |
 |----------|---------|--------|
-| JavaScript/TypeScript | `@openwa/sdk` | 🔜 Planned |
-| Python | `openwa-python` | 🔜 Planned |
-| PHP | `openwa/php-sdk` | 🔜 Planned |
-| Go | `openwa-go` | 🔜 Planned |
+| JavaScript/TypeScript | `@openwa/sdk` |  Planned |
+| Python | `openwa-python` |  Planned |
+| PHP | `openwa/php-sdk` |  Planned |
+| Go | `openwa-go` |  Planned |
 
 ### cURL Examples
 

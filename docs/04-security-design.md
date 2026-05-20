@@ -569,13 +569,13 @@ flowchart TB
 ### Environment Variables Security
 
 ```bash
-# ❌ BAD: Secrets in code or docker-compose.yml
+#  BAD: Secrets in code or docker-compose.yml
 DATABASE_URL=postgresql://user:password123@localhost:5432/db
 
-# ✅ GOOD: Use .env file (not committed)
+#  GOOD: Use .env file (not committed)
 DATABASE_URL=${DATABASE_URL}
 
-# ✅ BETTER: Use Docker secrets or vault
+#  BETTER: Use Docker secrets or vault
 docker secret create db_password ./secret.txt
 ```
 

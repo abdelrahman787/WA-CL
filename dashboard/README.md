@@ -6,7 +6,7 @@
 
 Modern web dashboard for managing OpenWA WhatsApp API Gateway sessions, webhooks, and infrastructure.
 
-## ✨ Features
+## Features
 
 - **Session Management** - Create, monitor, and control WhatsApp sessions
 - **QR Code Authentication** - Real-time QR code display for device pairing
@@ -15,7 +15,7 @@ Modern web dashboard for managing OpenWA WhatsApp API Gateway sessions, webhooks
 - **Infrastructure Monitoring** - View system health and storage status
 - **Real-time Updates** - Live session status via WebSocket
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Technology       | Purpose                 |
 | ---------------- | ----------------------- |
@@ -28,7 +28,7 @@ Modern web dashboard for managing OpenWA WhatsApp API Gateway sessions, webhooks
 | Socket.IO Client | Real-time Communication |
 | Lucide React     | Icons                   |
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -57,7 +57,7 @@ npm run build
 npm run preview
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 dashboard/
@@ -76,7 +76,7 @@ dashboard/
 └── vite.config.ts      # Vite configuration
 ```
 
-## 🔗 API Connection
+## API Connection
 
 The dashboard connects to the OpenWA API backend. Configure the API URL in environment variables:
 
@@ -84,6 +84,6 @@ The dashboard connects to the OpenWA API backend. Configure the API URL in envir
 VITE_API_URL=http://localhost:2785
 ```
 
-## 📄 License
+## License
 
 MIT License - Part of the [OpenWA](https://github.com/rmyndharis/OpenWA) project.

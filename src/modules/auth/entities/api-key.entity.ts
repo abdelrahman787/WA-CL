@@ -18,7 +18,7 @@ export class ApiKey {
   @Column({ type: 'varchar', length: 64 })
   keyHash: string;
 
-  @Column({ type: 'varchar', length: 8 })
+  @Column({ type: 'varchar', length: 12 })
   keyPrefix: string;
 
   @Column({

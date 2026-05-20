@@ -79,7 +79,7 @@ describe('WebhookService', () => {
     service = module.get<WebhookService>(WebhookService);
   });
 
-  // ── create ────────────────────────────────────────────────────────
+  // -- create --------------------------------------------------------
 
   describe('create', () => {
     it('should create a webhook with default events', async () => {
@@ -123,7 +123,7 @@ describe('WebhookService', () => {
     });
   });
 
-  // ── findBySession / findAll / findOne ──────────────────────────────
+  // -- findBySession / findAll / findOne ------------------------------
 
   describe('findBySession', () => {
     it('should return webhooks for a session', async () => {
@@ -163,7 +163,7 @@ describe('WebhookService', () => {
     });
   });
 
-  // ── update ────────────────────────────────────────────────────────
+  // -- update --------------------------------------------------------
 
   describe('update', () => {
     it('should update only provided fields', async () => {
@@ -178,7 +178,7 @@ describe('WebhookService', () => {
     });
   });
 
-  // ── delete ────────────────────────────────────────────────────────
+  // -- delete --------------------------------------------------------
 
   describe('delete', () => {
     it('should remove the webhook', async () => {
@@ -192,7 +192,7 @@ describe('WebhookService', () => {
     });
   });
 
-  // ── dispatch (direct mode — queue disabled) ───────────────────────
+  // -- dispatch (direct mode - queue disabled) ----------------------------------
 
   describe('dispatch (direct mode)', () => {
     const mockFetch = jest.fn();
@@ -285,7 +285,7 @@ describe('WebhookService', () => {
     });
   });
 
-  // ── generateSignature (via dispatch) ──────────────────────────────
+  // -- generateSignature (via dispatch) ------------------------------
 
   describe('generateSignature', () => {
     it('should produce valid HMAC-SHA256 signature', async () => {
@@ -341,7 +341,7 @@ describe('WebhookService', () => {
     });
   });
 
-  // ── dispatch (queue mode) ─────────────────────────────────────────
+  // -- dispatch (queue mode) -----------------------------------------
 
   describe('dispatch (queue mode)', () => {
     it('should add job to queue when queue is enabled', async () => {

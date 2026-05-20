@@ -22,7 +22,7 @@
  * @packageDocumentation
  */
 
-// ── Client Configuration ──────────────────────────────────────────
+// -- Client Configuration ------------------------------------------
 
 export interface OpenWAClientConfig {
   /** Base URL of the OpenWA API (e.g., 'http://localhost:2785') */
@@ -35,7 +35,7 @@ export interface OpenWAClientConfig {
   timeout?: number;
 }
 
-// ── Response Types ────────────────────────────────────────────────
+// -- Response Types ------------------------------------------------
 
 export interface MessageResponse {
   messageId: string;
@@ -50,7 +50,7 @@ export interface Session {
   pushName: string | null;
 }
 
-// ── Client Class ──────────────────────────────────────────────────
+// -- Client Class --------------------------------------------------
 
 export class OpenWAClient {
   private readonly config: Required<OpenWAClientConfig>;
@@ -62,7 +62,7 @@ export class OpenWAClient {
     };
   }
 
-  // Placeholder — will be auto-generated from OpenAPI spec
+  // Placeholder - will be auto-generated from OpenAPI spec
   get sessions() {
     return {
       list: () => this.request<Session[]>('GET', '/api/sessions'),
@@ -81,7 +81,7 @@ export class OpenWAClient {
     };
   }
 
-  // ── Internal HTTP client ──────────────────────────────────────────
+  // -- Internal HTTP client ------------------------------------------
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.config.baseUrl}${path}`;

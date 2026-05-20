@@ -14,7 +14,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *   This migration is a no-op on SQLite (TypeORM generates the UUID in the
  *   driver layer there, so no DB default is needed).
  *
- *   `gen_random_uuid()` is built into PostgreSQL 13+ — no extension required.
+ *   `gen_random_uuid()` is built into PostgreSQL 13+, no extension required.
  */
 export class AddUuidDefaultsForPostgres1779235200000 implements MigrationInterface {
   name = 'AddUuidDefaultsForPostgres1779235200000';

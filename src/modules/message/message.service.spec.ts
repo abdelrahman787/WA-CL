@@ -67,7 +67,7 @@ describe('MessageService', () => {
     service = module.get<MessageService>(MessageService);
   });
 
-  // ── sendText ──────────────────────────────────────────────────────
+  // -- sendText ------------------------------------------------------
 
   describe('sendText', () => {
     it('should send text message and return messageId + timestamp', async () => {
@@ -136,7 +136,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── sendImage ─────────────────────────────────────────────────────
+  // -- sendImage -----------------------------------------------------
 
   describe('sendImage', () => {
     it('should send image via URL', async () => {
@@ -167,7 +167,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── sendVideo / sendAudio / sendDocument / sendSticker ────────────
+  // -- sendVideo / sendAudio / sendDocument / sendSticker ------------
 
   describe('sendVideo', () => {
     it('should call engine.sendVideoMessage', async () => {
@@ -213,7 +213,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── sendLocation ──────────────────────────────────────────────────
+  // -- sendLocation --------------------------------------------------
 
   describe('sendLocation', () => {
     it('should send location with lat/lng', async () => {
@@ -232,7 +232,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── sendContact ───────────────────────────────────────────────────
+  // -- sendContact ---------------------------------------------------
 
   describe('sendContact', () => {
     it('should send contact with name and number', async () => {
@@ -250,7 +250,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── reply / forward ───────────────────────────────────────────────
+  // -- reply / forward -----------------------------------------------
 
   describe('reply', () => {
     it('should call engine.replyToMessage with quotedMessageId', async () => {
@@ -292,7 +292,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── saveIncomingMessage ───────────────────────────────────────────
+  // -- saveIncomingMessage -------------------------------------------
 
   describe('saveIncomingMessage', () => {
     it('should save with INCOMING direction', async () => {
@@ -312,7 +312,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── buildMediaInput (via sendImage) ───────────────────────────────
+  // -- buildMediaInput (via sendImage) -------------------------------
 
   describe('buildMediaInput validation', () => {
     it('should throw when neither url nor base64 is provided', async () => {
@@ -331,7 +331,7 @@ describe('MessageService', () => {
     });
   });
 
-  // ── reactToMessage / deleteMessage ────────────────────────────────
+  // -- reactToMessage / deleteMessage --------------------------------
 
   describe('reactToMessage', () => {
     it('should call engine.reactToMessage', async () => {

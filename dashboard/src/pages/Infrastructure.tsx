@@ -246,7 +246,7 @@ export function Infrastructure() {
       const response = await infraApi.restart(pendingProfiles, profilesToRemove);
       if (response.estimatedTime) setRestartCountdown(response.estimatedTime);
     } catch {
-      // Expected — server shutting down
+      // Expected - server shutting down
     }
 
     setRestartStatus('waiting');
@@ -305,7 +305,7 @@ export function Infrastructure() {
               <h2>{t('infrastructure.server.title')}</h2>
             </div>
             <span className={`status-indicator ${serverConfig.nodeEnv === 'production' ? 'connected' : 'sqlite'}`}>
-              ● {serverConfig.nodeEnv === 'production' ? t('infrastructure.server.production') : t('infrastructure.server.development')}
+              {serverConfig.nodeEnv === 'production' ? t('infrastructure.server.production') : t('infrastructure.server.development')}
             </span>
           </div>
 
@@ -455,7 +455,7 @@ export function Infrastructure() {
               <h2>{t('infrastructure.database.title')}</h2>
             </div>
             <span className={`status-indicator ${dbConfig.type === 'postgres' ? 'connected' : 'sqlite'}`}>
-              ● {dbConfig.type === 'postgres' ? 'PostgreSQL' : 'SQLite'}
+              {dbConfig.type === 'postgres' ? 'PostgreSQL' : 'SQLite'}
             </span>
           </div>
 
@@ -616,7 +616,7 @@ export function Infrastructure() {
             <span
               className={`status-indicator ${redisEnabled && redisConfig.connected ? 'connected' : 'disconnected'}`}
             >
-              ● {redisEnabled
+              {redisEnabled
                 ? redisConfig.connected
                   ? t('infrastructure.statusLabels.connected')
                   : t('infrastructure.statusLabels.disconnected')

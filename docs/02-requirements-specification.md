@@ -453,35 +453,35 @@ stateDiagram-v2
 
 | Requirement ID | Use Case | Test Case | Status |
 |----------------|----------|-----------|--------|
-| FR-SM-001 | UC-003 | TC-SM-001 | ✅ Implemented |
-| FR-SM-002 | UC-003 | TC-SM-002 | ✅ Implemented |
-| FR-MSG-001 | UC-001 | TC-MSG-001 | ✅ Implemented |
-| FR-WH-001 | UC-002 | TC-WH-001 | ✅ Implemented |
+| FR-SM-001 | UC-003 | TC-SM-001 |  Implemented |
+| FR-SM-002 | UC-003 | TC-SM-002 |  Implemented |
+| FR-MSG-001 | UC-001 | TC-MSG-001 |  Implemented |
+| FR-WH-001 | UC-002 | TC-WH-001 |  Implemented |
 
 ## 2.6 Acceptance Criteria
 
 ### Phase 1 MVP Acceptance Criteria
 
 ```
-✓ A single session can be created and authenticated
-✓ QR code can be scanned and session connected
-✓ Text messages can be sent
-✓ Image messages can be sent
-✓ Incoming messages are forwarded to webhooks
-✓ API documentation is available via Swagger
-✓ Docker image can be built and run
-✓ Basic health check endpoint works
+ A single session can be created and authenticated
+ QR code can be scanned and session connected
+ Text messages can be sent
+ Image messages can be sent
+ Incoming messages are forwarded to webhooks
+ API documentation is available via Swagger
+ Docker image can be built and run
+ Basic health check endpoint works
 ```
 
 ### Phase 2 Acceptance Criteria
 
 ```
-✓ Multiple sessions can run concurrently
-✓ Dashboard can display all sessions
-✓ Webhooks can be managed via UI
-✓ PostgreSQL can be used as storage
-✓ API key authentication works
-✓ Rate limiting is enabled
+ Multiple sessions can run concurrently
+ Dashboard can display all sessions
+ Webhooks can be managed via UI
+ PostgreSQL can be used as storage
+ API key authentication works
+ Rate limiting is enabled
 ```
 ---
 

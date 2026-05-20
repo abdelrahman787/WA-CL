@@ -11,13 +11,13 @@ OpenWA provides official n8n community nodes for integrating WhatsApp automation
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   n8n Workflow  │────▶│  OpenWA Node    │────▶│  OpenWA API     │
+│   n8n Workflow  │────│  OpenWA Node    │────│  OpenWA API     │
 │                 │     │  (credentials)  │     │  (your server)  │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                                                         │
-                                                        ▼
+                                                        
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   n8n Workflow  │◀────│ OpenWA Trigger  │◀────│  Webhook POST   │
+│   n8n Workflow  │────│ OpenWA Trigger  │────│  Webhook POST   │
 │   (triggered)   │     │  (listens)      │     │  from OpenWA    │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
@@ -147,7 +147,7 @@ Get notified on Slack when WhatsApp session disconnects.
 **Slack Message:**
 
 ```
-⚠️ WhatsApp session "{{$json.sessionId}}" disconnected!
+ WhatsApp session "{{$json.sessionId}}" disconnected!
 Time: {{$json.timestamp}}
 Please check and reconnect.
 ```

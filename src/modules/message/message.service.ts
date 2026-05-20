@@ -240,7 +240,7 @@ export class MessageService {
     // Save message as pending BEFORE sending
     const message = await this.saveOutgoingMessage(sessionId, {
       chatId: dto.chatId,
-      body: `📍 ${dto.description || 'Location'}`,
+      body: `${dto.description || 'Location'}`,
       type: 'location',
     });
 
@@ -278,7 +278,7 @@ export class MessageService {
     // Save message as pending BEFORE sending
     const message = await this.saveOutgoingMessage(sessionId, {
       chatId: dto.chatId,
-      body: `📇 ${dto.contactName}`,
+      body: `${dto.contactName}`,
       type: 'contact',
     });
 

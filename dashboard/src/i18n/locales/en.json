@@ -78,7 +78,7 @@
     "connectionError": "Unable to connect to server. Please try again.",
     "help": "Need help?",
     "viewDocs": "View Documentation",
-    "footer": "Made with ❤️ by Yudhi Armyndharis and the OpenWA Community",
+    "footer": "Made by Yudhi Armyndharis and the OpenWA Community",
     "version": "v{{version}} · {{date}}"
   },
   "dashboard": {
@@ -447,11 +447,11 @@
       "disabled": "Disabled"
     },
     "restart": {
-      "idleTitle": "⚙️ Configuration Saved",
-      "restartingTitle": "🔄 Restarting Server...",
-      "waitingTitle": "⏳ Please Wait...",
-      "successTitle": "✅ Server Ready",
-      "errorTitle": "❌ Restart Failed",
+      "idleTitle": "Configuration Saved",
+      "restartingTitle": "Restarting Server...",
+      "waitingTitle": "Please Wait...",
+      "successTitle": "Server Ready",
+      "errorTitle": "Restart Failed",
       "idleDesc": "Configuration has been saved to <code>.env.generated</code>.<br/>A server restart is required to apply the changes.",
       "later": "Restart Later",
       "now": "Restart Now",
