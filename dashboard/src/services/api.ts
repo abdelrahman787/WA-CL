@@ -265,10 +265,10 @@ export const auditApi = {
 // =============================================================================
 
 export const messageApi = {
-  sendText: (sessionId: string, chatId: string, text: string) =>
+  sendText: (sessionId: string, chatId: string, text: string, humanize?: { enabled?: boolean; speed?: string }) =>
     request<MessageResponse>(`/sessions/${sessionId}/messages/send-text`, {
       method: 'POST',
-      body: JSON.stringify({ chatId, text }),
+      body: JSON.stringify({ chatId, text, humanize }),
     }),
   sendImage: (sessionId: string, chatId: string, url: string, caption?: string) =>
     request<MessageResponse>(`/sessions/${sessionId}/messages/send-image`, {

@@ -1,5 +1,78 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MaxLength, IsUrl, ValidateIf } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsUrl,
+  ValidateIf,
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  Min,
+  Max,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export type TypingSpeed = 'slow' | 'normal' | 'fast';
+
+export class HumanizeOptionsDto {
+  @ApiPropertyOptional({
+    description: 'Enable human-like typing simulation',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Typing speed preset',
+    enum: ['slow', 'normal', 'fast'],
+    default: 'normal',
+  })
+  @IsOptional()
+  @IsEnum(['slow', 'normal', 'fast'])
+  speed?: TypingSpeed;
+
+  @ApiPropertyOptional({
+    description: 'Random variability factor (0-1). Higher = more natural variation',
+    default: 0.2,
+    minimum: 0,
+    maximum: 1,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  variability?: number;
+
+  @ApiPropertyOptional({
+    description: 'Minimum typing delay in milliseconds',
+    default: 500,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  minDelayMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Maximum typing delay in milliseconds (0 = no limit)',
+    default: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(500)
+  maxDelayMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Show recording indicator instead of typing (for voice-like feel)',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  simulateRecording?: boolean;
+}
 
 export class SendTextMessageDto {
   @ApiProperty({
@@ -19,6 +92,15 @@ export class SendTextMessageDto {
   @IsNotEmpty()
   @MaxLength(4096)
   text: string;
+
+  @ApiPropertyOptional({
+    description: 'Human-like typing simulation options',
+    type: HumanizeOptionsDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => HumanizeOptionsDto)
+  humanize?: HumanizeOptionsDto;
 }
 
 export class SendMediaMessageDto {

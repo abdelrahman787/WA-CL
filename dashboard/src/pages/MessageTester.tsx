@@ -16,6 +16,7 @@ interface ApiResponse {
 }
 
 const messageTypes = ['text', 'image', 'video', 'audio', 'document'] as const;
+const typingSpeeds = ['slow', 'normal', 'fast'] as const;
 
 export function MessageTester() {
   const { t } = useTranslation();
@@ -32,6 +33,10 @@ export function MessageTester() {
   const [mediaUrl, setMediaUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<ApiResponse | null>(null);
+
+  // Humanize options
+  const [humanizeEnabled, setHumanizeEnabled] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState<typeof typingSpeeds[number]>('normal');
 
   const { data: groups = [], isLoading: loadingGroups } = useSessionGroupsQuery(
     session,
@@ -64,7 +69,8 @@ export function MessageTester() {
     try {
       let result;
       if (messageType === 'text') {
-        result = await messageApi.sendText(session, chatId, content);
+        const humanize = humanizeEnabled ? { enabled: true, speed: typingSpeed } : undefined;
+        result = await messageApi.sendText(session, chatId, content, humanize);
       } else if (messageType === 'image') {
         result = await messageApi.sendImage(session, chatId, mediaUrl, content);
       } else if (messageType === 'video') {
@@ -184,16 +190,55 @@ export function MessageTester() {
             </div>
           </div>
 
-          {messageType === 'text' ? (
+          {messageType === 'text' && (
             <div className="form-group">
-              <label>{t('messageTester.messageContent')}</label>
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                placeholder={t('messageTester.messagePlaceholder')}
-                rows={5}
-              />
+              <label>{t('messageTester.humanizeLabel')}</label>
+              <div className="toggle-group">
+                <button
+                  className={humanizeEnabled ? 'active' : ''}
+                  onClick={() => setHumanizeEnabled(true)}
+                >
+                  {t('messageTester.humanizeOn')}
+                </button>
+                <button
+                  className={!humanizeEnabled ? 'active' : ''}
+                  onClick={() => setHumanizeEnabled(false)}
+                >
+                  {t('messageTester.humanizeOff')}
+                </button>
+              </div>
             </div>
+          )}
+
+          {messageType === 'text' ? (
+            <>
+              {humanizeEnabled && (
+                <div className="form-group">
+                  <label>{t('messageTester.typingSpeed')}</label>
+                  <div className="toggle-group">
+                    {typingSpeeds.map(speed => (
+                      <button
+                        key={speed}
+                        className={typingSpeed === speed ? 'active' : ''}
+                        onClick={() => setTypingSpeed(speed)}
+                      >
+                        {t(`messageTester.speeds.${speed}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>{t('messageTester.messageContent')}</label>
+                <textarea
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder={t('messageTester.messagePlaceholder')}
+                  rows={5}
+                />
+              </div>
+            </>
           ) : (
             <>
               <div className="form-group">

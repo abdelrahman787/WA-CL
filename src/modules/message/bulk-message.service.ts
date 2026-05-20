@@ -12,6 +12,7 @@ import {
 import { SendBulkMessageDto } from './dto/bulk-message.dto';
 import { SessionService } from '../session/session.service';
 import { IWhatsAppEngine } from '../../engine/interfaces/whatsapp-engine.interface';
+import { HumanizeService } from './humanize.service';
 
 // Type definitions for bulk message content
 interface BulkMessageContent {
@@ -32,6 +33,7 @@ export class BulkMessageService {
     @InjectRepository(MessageBatch, 'data')
     private readonly batchRepository: Repository<MessageBatch>,
     private readonly sessionService: SessionService,
+    private readonly humanizeService: HumanizeService,
   ) {}
 
   async createBatch(sessionId: string, dto: SendBulkMessageDto): Promise<MessageBatch> {
@@ -161,7 +163,15 @@ export class BulkMessageService {
 
       try {
         // Apply template variables
-        const content: BulkMessageContent = this.applyVariables(msg.content as BulkMessageContent, msg.variables);
+        const content: BulkMessageContent = this.applyVariables(msg.content, msg.variables);
+
+        // Simulate human typing for text messages if humanize is enabled
+        if (batch.options.humanize && msg.type === 'text' && content.text) {
+          await this.humanizeService.simulateHumanTyping(engine, msg.chatId, content.text, {
+            enabled: true,
+            speed: batch.options.typingSpeed || 'normal',
+          });
+        }
 
         // Send message based on type
         const messageResult = await this.sendMessage(engine, msg.chatId, msg.type, content);
