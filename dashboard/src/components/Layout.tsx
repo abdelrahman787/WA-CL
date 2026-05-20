@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { type UserRole } from '../hooks/useRole';
-import { supportedLanguages, type SupportedLanguage } from '../i18n';
+import { type SupportedLanguage } from '../i18n';
 import './Layout.css';
 
 interface LayoutProps {
@@ -80,12 +80,9 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
 
   const currentLang = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0] as SupportedLanguage;
-  const cycleLanguage = () => {
-    const idx = supportedLanguages.indexOf(currentLang);
-    const next = supportedLanguages[(idx + 1) % supportedLanguages.length];
-    void i18n.changeLanguage(next);
+  const handleLanguageChange = (lang: string) => {
+    void i18n.changeLanguage(lang);
   };
-  const languageLabel = currentLang === 'he' ? 'עברית' : 'EN';
   const isRtl = currentLang === 'he';
 
   return (
@@ -151,15 +148,20 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
         </nav>
 
         <div className="sidebar-footer">
-          <button
-            className="theme-toggle-btn"
-            onClick={cycleLanguage}
-            title={t('common.language')}
-            aria-label={t('common.language')}
-          >
-            <Languages size={18} />
-            {!isCollapsed && <span>{languageLabel}</span>}
-          </button>
+          <div className="language-select-wrapper" title={t('common.language')}>
+            <Languages size={18} className="language-icon" />
+            <select
+              value={currentLang}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="language-select"
+              aria-label={t('common.language')}
+            >
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="he">עברית</option>
+            </select>
+            {!isCollapsed && <span className="language-arrow">▼</span>}
+          </div>
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
