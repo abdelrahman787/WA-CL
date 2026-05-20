@@ -1,0 +1,513 @@
+{
+  "common": {
+    "appName": "OpenWA",
+    "appSubtitle": "API de WhatsApp",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "close": "Cerrar",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "actions": "Acciones",
+    "status": "Estado",
+    "name": "Nombre",
+    "role": "Rol",
+    "type": "Tipo",
+    "url": "URL",
+    "port": "Puerto",
+    "host": "Host",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "never": "Nunca",
+    "justNow": "Hace un momento",
+    "minAgo": "Hace {{count}} min",
+    "hoursAgo": "Hace {{count}} horas",
+    "optional": "opcional",
+    "language": "Idioma",
+    "english": "Inglés",
+    "hebrew": "Hebreo",
+    "spanish": "Español",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "expand": "Expandir",
+    "collapse": "Colapsar",
+    "logout": "Cerrar sesión",
+    "refresh": "Actualizar",
+    "errorGeneric": "Ha ocurrido un error",
+    "unknownError": "Error desconocido"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "label": "Tema: {{value}}"
+  },
+  "nav": {
+    "dashboard": "Panel de Control",
+    "sessions": "Sesiones",
+    "webhooks": "Webhooks",
+    "apiKeys": "Claves de API",
+    "messageTester": "Probador de Mensajes",
+    "infrastructure": "Infraestructura",
+    "plugins": "Plugins",
+    "logs": "Registros de Auditoría"
+  },
+  "errorBoundary": {
+    "title": "Algo salió mal",
+    "description": "El panel de control encontró un error inesperado.",
+    "reload": "Recargar Panel"
+  },
+  "login": {
+    "apiKey": "Clave de API",
+    "apiKeyPlaceholder": "Introduce tu clave de API",
+    "apiKeyRequired": "La clave de API es obligatoria",
+    "connect": "Conectar",
+    "connecting": "Conectando...",
+    "invalidKey": "Clave de API inválida",
+    "connectionError": "No se pudo conectar al servidor. Inténtalo de nuevo.",
+    "help": "¿Necesitas ayuda?",
+    "viewDocs": "Ver Documentación",
+    "footer": "Hecho con ❤️ por Yudhi Armyndharis y la Comunidad de OpenWA",
+    "version": "v{{version}} · {{date}}"
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "subtitle": "Resumen de tus sesiones de WhatsApp y actividad",
+    "stats": {
+      "activeSessions": "Sesiones Activas",
+      "messagesToday": "Mensajes Hoy",
+      "webhooksConfigured": "Webhooks Configurados",
+      "apiCalls": "Llamadas de API (24h)"
+    },
+    "sessionsOverview": "Resumen de Sesiones",
+    "showingSessions": "Mostrando {{shown}} de {{total}} sesiones",
+    "columns": {
+      "sessionId": "ID de Sesión",
+      "phone": "Número de Teléfono",
+      "status": "Estado",
+      "lastActive": "Última Actividad",
+      "actions": "Acciones"
+    },
+    "noSessions": "No se encontraron sesiones. Crea una para comenzar.",
+    "view": "Ver",
+    "disconnect": "Desconectar",
+    "errorPrefix": "Error: {{message}}",
+    "loadError": "Error al cargar datos"
+  },
+  "sessionStatus": {
+    "created": "Nuevo",
+    "idle": "Inactivo",
+    "initializing": "Iniciando...",
+    "connecting": "Conectando...",
+    "qr_ready": "Escanear QR",
+    "ready": "Conectado",
+    "disconnected": "Desconectado"
+  },
+  "sessions": {
+    "title": "Sesiones",
+    "subtitle": "Administra tus sesiones de WhatsApp y conexiones de códigos QR",
+    "newSession": "Nueva Sesión",
+    "searchPlaceholder": "Buscar sesiones...",
+    "filter": {
+      "all": "Todos los estados",
+      "active": "Activas (Conectadas)",
+      "inactive": "Inactivas",
+      "connecting": "Conectando"
+    },
+    "empty": {
+      "title": "No se encontraron sesiones",
+      "description": "Crea una nueva sesión para comenzar"
+    },
+    "create": {
+      "title": "Crear Nueva Sesión",
+      "label": "Nombre de la Sesión",
+      "placeholder": "ej. bot-marketing",
+      "hint": "Usa solo letras minúsculas, números y guiones. Ejemplo: <code>soporte-cliente</code>, <code>bot-1</code>",
+      "invalidChars": "Caracteres inválidos. Solo se permiten letras minúsculas, números y guiones.",
+      "tooLong": "El nombre debe tener 50 caracteres o menos ({{length}}/50).",
+      "duplicate": "Ya existe una sesión con este nombre.",
+      "successTitle": "Sesión Creada",
+      "successDesc": "Sesión \"{{name}}\" creada exitosamente",
+      "errorTitle": "Error al Crear",
+      "errorDefault": "No se pudo crear la sesión"
+    },
+    "delete": {
+      "title": "Confirmar Eliminación",
+      "message": "¿Estás seguro de que deseas eliminar la sesión <strong>\"{{name}}\"</strong>?",
+      "warning": "Esta acción no se puede deshacer.",
+      "successTitle": "Sesión Eliminada",
+      "successDescNamed": "Sesión \"{{name}}\" eliminada",
+      "successDescGeneric": "Sesión eliminada",
+      "errorTitle": "Error al Eliminar",
+      "errorDefault": "No se pudo eliminar la sesión"
+    },
+    "qr": {
+      "title": "Escanear Código QR",
+      "step1": "<strong>1.</strong> Abre WhatsApp en tu teléfono",
+      "step2": "<strong>2.</strong> Toca <strong>Menú</strong> o <strong>Configuración</strong> → <strong>Dispositivos vinculados</strong>",
+      "step3": "<strong>3.</strong> Toca <strong>Vincular un dispositivo</strong> y escanea este código QR",
+      "autoRefresh": "El QR se actualiza automáticamente cada 5 segundos",
+      "generating": "Generando código QR...",
+      "unavailable": "El código QR no está disponible todavía. Inténtalo de nuevo en un momento.",
+      "preparing": "Preparando código QR...",
+      "showQr": "Mostrar QR",
+      "loading": "Cargando...",
+      "scanToConnect": "Escanea el código QR para conectar"
+    },
+    "details": {
+      "title": "Detalles de la Sesión",
+      "name": "Nombre",
+      "status": "Estado",
+      "sessionId": "ID de Sesión",
+      "phone": "Número de Teléfono",
+      "phoneNone": "No conectado",
+      "created": "Creado",
+      "lastActive": "Última Actividad"
+    },
+    "actions": {
+      "view": "Ver",
+      "start": "Iniciar",
+      "stop": "Detener",
+      "reconnect": "Reconectar",
+      "delete": "Eliminar"
+    },
+    "toasts": {
+      "readyTitle": "Sesión Lista",
+      "readyDesc": "La sesión de WhatsApp está conectada",
+      "disconnectedTitle": "Sesión Desconectada",
+      "disconnectedDesc": "La sesión de WhatsApp se ha desconectado"
+    },
+    "card": {
+      "phone": "Teléfono",
+      "sessionId": "ID de Sesión",
+      "lastActive": "Último Uso"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "subtitle": "Configura devoluciones de llamada HTTP para notificaciones de eventos en tiempo real",
+    "addWebhook": "Agregar Webhook",
+    "createTitle": "Crear Webhook",
+    "editTitle": "Editar Webhook",
+    "deleteTitle": "Eliminar Webhook",
+    "deleteConfirm": "¿Estás seguro de que deseas eliminar este webhook?",
+    "selectSession": "Seleccionar sesión...",
+    "session": "Sesión",
+    "events": "Eventos",
+    "available": "Eventos Disponibles",
+    "saveChanges": "Guardar Cambios",
+    "columns": {
+      "url": "URL",
+      "events": "Eventos",
+      "session": "Sesión",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "empty": {
+      "title": "No hay webhooks configurados",
+      "description": "Agrega un webhook para recibir notificaciones de eventos en tiempo real"
+    },
+    "toasts": {
+      "created": "Webhook creado exitosamente",
+      "createFailed": "Error al crear webhook: {{message}}",
+      "deleted": "Webhook eliminado exitosamente",
+      "deleteFailed": "Error al eliminar webhook: {{message}}",
+      "updated": "Webhook actualizado exitosamente",
+      "updateFailed": "Error al actualizar webhook: {{message}}",
+      "testOk": "¡Prueba de webhook exitosa! Estado: {{status}}",
+      "testFailed": "Prueba de webhook fallida: {{message}}",
+      "testError": "Error al probar webhook: {{message}}"
+    },
+    "actions": {
+      "test": "Probar",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "eventDescriptions": {
+      "message.received": "Cuando se recibe un mensaje",
+      "message.sent": "Cuando se envía un mensaje",
+      "session.connected": "Cuando se conecta una sesión",
+      "session.disconnected": "Cuando se desconecta una sesión",
+      "session.qr": "Cuando se genera un código QR",
+      "all": "Todos los eventos"
+    }
+  },
+  "apiKeys": {
+    "title": "Claves de API",
+    "subtitle": "Administra las claves de API para autenticación y control de acceso",
+    "createBtn": "Crear Clave de API",
+    "modalTitle": "Crear Clave de API",
+    "createdTitle": "Clave de API Creada",
+    "createdHint": "Copia esta clave ahora. No podrás volver a verla de nuevo.",
+    "namePlaceholder": "ej. Clave de Producción",
+    "rolesTitle": "Referencia de Roles",
+    "roles": {
+      "admin": "Administrador",
+      "operator": "Operador",
+      "viewer": "Lector"
+    },
+    "roleDescriptions": {
+      "admin": "Acceso total a todos los recursos",
+      "operator": "Administración de sesiones y mensajes",
+      "viewer": "Acceso de solo lectura"
+    },
+    "columns": {
+      "name": "Nombre",
+      "key": "Clave",
+      "role": "Rol",
+      "status": "Estado",
+      "lastUsed": "Último Uso",
+      "actions": "Acciones"
+    },
+    "statuses": {
+      "active": "Activa",
+      "revoked": "Revocada"
+    },
+    "empty": {
+      "title": "No se han creado claves de API",
+      "description": "Crea una clave de API para autenticar tus solicitudes"
+    },
+    "confirm": {
+      "deleteTitle": "Eliminar Clave de API",
+      "revokeTitle": "Revocar Clave de API",
+      "deleteMessage": "¿Estás seguro de que deseas eliminar permanentemente la clave <strong>{{name}}</strong>? Esta acción no se puede deshacer.",
+      "revokeMessage": "¿Estás seguro de que deseas revocar la clave <strong>{{name}}</strong>? Dejará de funcionar.",
+      "delete": "Eliminar",
+      "revoke": "Revocar"
+    },
+    "actions": {
+      "copy": "Copiar",
+      "revoke": "Revocar",
+      "delete": "Eliminar"
+    }
+  },
+  "logs": {
+    "title": "Registros de Auditoría",
+    "subtitle": "Rastrea y revisa todas las acciones de la API y eventos del sistema",
+    "exportCsv": "Exportar CSV",
+    "searchPlaceholder": "Buscar registros...",
+    "severity": {
+      "all": "Todas las severidades",
+      "info": "Información",
+      "warn": "Advertencia",
+      "error": "Error"
+    },
+    "columns": {
+      "timestamp": "Marca de tiempo",
+      "action": "Acción",
+      "session": "Sesión",
+      "apiKey": "Clave de API",
+      "ip": "Dirección IP",
+      "severity": "Severidad"
+    },
+    "empty": {
+      "title": "No se encontraron registros",
+      "description": "Los registros de auditoría aparecerán aquí a medida que se realicen acciones"
+    }
+  },
+  "messageTester": {
+    "title": "Probador de Mensajes",
+    "subtitle": "Envía mensajes de prueba a través de la API",
+    "compose": "Enviar Mensaje de Prueba",
+    "responseTitle": "Respuesta de la API",
+    "session": "Sesión",
+    "noReadySessions": "No hay sesiones listas",
+    "sessionOptionPhoneNone": "Sin teléfono",
+    "recipientType": "Tipo de Destinatario",
+    "personal": "Personal",
+    "group": "Grupo",
+    "selectGroup": "Seleccionar Grupo",
+    "recipientPhone": "Número de Teléfono del Destinatario",
+    "loadingGroups": "Cargando grupos...",
+    "noGroupsFound": "No se encontraron grupos",
+    "selectGroupHint": "Selecciona un grupo de tu WhatsApp",
+    "phoneHint": "Usa formato internacional sin espacios",
+    "messageType": "Tipo de Mensaje",
+    "types": {
+      "text": "Texto",
+      "image": "Imagen",
+      "video": "Video",
+      "audio": "Audio",
+      "document": "Documento"
+    },
+    "messageContent": "Contenido del Mensaje",
+    "messagePlaceholder": "Escribe tu mensaje aquí...",
+    "mediaUrl": "URL del Archivo",
+    "caption": "Leyenda",
+    "filename": "Nombre del archivo",
+    "captionPlaceholder": "Escribe una leyenda...",
+    "filenamePlaceholder": "documento.pdf",
+    "send": "Enviar Mensaje",
+    "sending": "Enviando...",
+    "viewOnly": "Solo Vista",
+    "responseEmpty": "Envía un mensaje para ver la respuesta de la API",
+    "successLabel": "200 OK - Éxito",
+    "failedLabel": "400 - Fallido",
+    "response": {
+      "timestamp": "Marca de tiempo",
+      "messageId": "ID de Mensaje",
+      "error": "Error"
+    },
+    "sendFailed": "Error al enviar el mensaje"
+  },
+  "infrastructure": {
+    "title": "Infraestructura",
+    "subtitle": "Configura los ajustes del servidor, base de datos, caché, almacenamiento y motor",
+    "saveConfig": "Guardar Configuración",
+    "saving": "Guardando...",
+    "server": {
+      "title": "Configuración del Servidor",
+      "production": "Producción",
+      "development": "Desarrollo",
+      "environment": "Entorno",
+      "domain": "Dominio",
+      "apiPort": "Puerto de API",
+      "dashboardPort": "Puerto de Dashboard",
+      "corsOrigins": "Orígenes de CORS",
+      "corsPlaceholder": "* o valores separados por comas",
+      "publicApiUrl": "URL Pública de API (opcional)",
+      "publicDashboardUrl": "URL Pública de Dashboard (opcional)"
+    },
+    "webhook": {
+      "title": "Webhooks y Límites de Tasa",
+      "settings": "Ajustes de Webhooks",
+      "timeout": "Tiempo de espera (ms)",
+      "maxRetries": "Reintentos Máximos",
+      "retryDelay": "Retraso de reintento (ms)",
+      "rateLimit": "Límites de Tasa",
+      "window": "Ventana de tiempo (segundos)",
+      "maxReq": "Peticiones Máximas por Ventana"
+    },
+    "database": {
+      "title": "Configuración de Base de Datos",
+      "sqlite": "SQLite",
+      "sqliteDesc": "Base de datos local basada en archivos",
+      "postgres": "PostgreSQL",
+      "postgresDesc": "Base de datos lista para producción",
+      "useBuiltIn": "Usar contenedor integrado de PostgreSQL",
+      "builtInDesc": "OpenWA administrará un contenedor de PostgreSQL por ti",
+      "dbName": "Nombre de Base de Datos",
+      "poolSize": "Tamaño del Pool",
+      "ssl": "Conexión SSL",
+      "sslDesc": "Habilitar TLS/SSL para conexiones de bases de datos seguras",
+      "migrationsTitle": "Migraciones de Base de Datos",
+      "migrationsStatus": "El esquema se auto-sincroniza con TypeORM",
+      "migrationsHint": "Las migraciones se gestionan automáticamente. Usa CLI para migraciones manuales."
+    },
+    "redis": {
+      "title": "Redis",
+      "enable": "Habilitar Redis",
+      "enableDesc": "Requerido para caché, almacenamiento de sesiones y colas de BullMQ",
+      "useBuiltIn": "Usar contenedor integrado de Redis",
+      "builtInDesc": "OpenWA administrará un contenedor de Redis por ti",
+      "queueTitle": "Habilitar Sistema de Colas BullMQ",
+      "queueDesc": "Usa colas de mensajería para una entrega confiable de mensajes y webhooks",
+      "statsTitle": "Estadísticas de Colas",
+      "messageQueue": "Cola de Mensajes",
+      "webhookQueue": "Cola de Webhooks",
+      "pending": "Pendientes",
+      "completed": "Completados",
+      "failed": "Fallidos",
+      "clearFailed": "Limpiar trabajos fallidos",
+      "viewBullMq": "Ver Panel de BullMQ",
+      "disabledTitle": "Redis está Deshabilitado",
+      "disabledDesc": "Habilita Redis para caché, almacenamiento de sesiones y colas de mensajes de BullMQ.",
+      "passwordOptional": "(opcional)"
+    },
+    "storage": {
+      "title": "Configuración de Almacenamiento",
+      "local": "Sistema de archivos local",
+      "localDesc": "Almacenar archivos multimedia localmente",
+      "s3": "Amazon S3",
+      "s3Desc": "Almacenamiento en la nube (compatible con S3)",
+      "useBuiltIn": "Usar contenedor integrado de MinIO",
+      "builtInDesc": "OpenWA administrará un contenedor de MinIO (compatible con S3) por ti",
+      "storagePath": "Ruta de Almacenamiento",
+      "bucket": "Nombre del Bucket",
+      "region": "Región",
+      "accessKey": "Clave de Acceso",
+      "secretKey": "Clave Secreta",
+      "endpoint": "Endpoint Personalizado (opcional)",
+      "endpointHint": "Para MinIO u otros servicios compatibles con S3"
+    },
+    "statusLabels": {
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "disabled": "Deshabilitado"
+    },
+    "restart": {
+      "idleTitle": "⚙️ Configuración Guardada",
+      "restartingTitle": "🔄 Reiniciando Servidor...",
+      "waitingTitle": "⏳ Por Favor Espera...",
+      "successTitle": "✅ Servidor Listo",
+      "errorTitle": "❌ Fallo al Reiniciar",
+      "idleDesc": "La configuración se ha guardado en <code>.env.generated</code>.<br/>Se requiere reiniciar el servidor para aplicar los cambios.",
+      "later": "Reiniciar Después",
+      "now": "Reiniciar Ahora",
+      "restartingMsg": "Reiniciando servidor... {{count}}s",
+      "checking": "Comprobando estado del servidor...",
+      "dontClose": "Por favor no cierres esta ventana",
+      "successMsg": "¡El servidor vuelve a estar en línea! La página se recargará automáticamente.",
+      "errorMsg": "El servidor no respondió tras 30 segundos. Por favor, revisa los registros de Docker y reinicia manualmente.",
+      "reload": "Recargar Página"
+    },
+    "toasts": {
+      "saveFailed": "Fallo al Guardar"
+    }
+  },
+  "plugins": {
+    "title": "Plugins",
+    "subtitle": "Administra motores, backends de almacenamiento y extensiones",
+    "refresh": "Actualizar",
+    "engineCard": "Motor Activo de WhatsApp",
+    "running": "Ejecutándose",
+    "supportedFeatures": "Características Soportadas:",
+    "more": "+{{count}} más",
+    "builtIn": "Integrado",
+    "noDescription": "Sin descripción disponible",
+    "required": "Requerido",
+    "active": "Activo",
+    "activate": "Activar",
+    "enable": "Habilitar",
+    "disable": "Deshabilitar",
+    "healthCheck": "Comprobación de Salud",
+    "configure": "Configurar",
+    "empty": {
+      "title": "No se encontraron plugins",
+      "description": "Instala plugins para extender las funciones de OpenWA"
+    },
+    "config": {
+      "title": "Configurar {{name}}",
+      "restartNotice": "Los cambios requieren reiniciar el servidor para tener efecto",
+      "engineType": "Tipo de Motor",
+      "headless": "Modo Headless (Sin Interfaz)",
+      "headlessDesc": "Ejecutar navegador sin interfaz visible (recomendado para producción)",
+      "sessionDataPath": "Ruta de datos de sesión",
+      "browserArgs": "Argumentos del navegador",
+      "noOptions": "No hay opciones de configuración disponibles para este plugin",
+      "save": "Guardar Configuración"
+    },
+    "toasts": {
+      "errorTitle": "Error de Plugin",
+      "errorDefault": "Error al alternar el plugin",
+      "healthOk": "Comprobación de Salud Aprobada",
+      "healthFail": "Comprobación de Salud Fallida",
+      "healthError": "Error de Comprobación de Salud",
+      "savedTitle": "Configuración Guardada",
+      "savedDesc": "Se requiere reiniciar el servidor para aplicar cambios.",
+      "saveFailed": "Fallo al Guardar"
+    }
+  }
+}

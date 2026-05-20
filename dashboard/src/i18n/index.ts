@@ -4,8 +4,9 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './locales/en.json';
 import he from './locales/he.json';
 import zh from './locales/zh.json';
+import es from './locales/es.json';
 
-export const supportedLanguages = ['en', 'he', 'zh'] as const;
+export const supportedLanguages = ['en', 'he', 'zh', 'es'] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
 export const rtlLanguages: SupportedLanguage[] = ['he'];
@@ -18,6 +19,7 @@ void i18n
       en: { translation: en },
       he: { translation: he },
       zh: { translation: zh },
+      es: { translation: es },
     },
     fallbackLng: 'en',
     supportedLngs: supportedLanguages as unknown as string[],
