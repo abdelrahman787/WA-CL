@@ -184,21 +184,35 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
   /**
    * Emit event to specific rooms based on sessionId and event type
+   * Maps backend event names to frontend event names for real-time UI updates
    */
   private emitToRooms(sessionId: string, event: string, data: unknown): void {
-    const eventMessage: WSEventMessage = {
-      type: 'event',
-      payload: { event, sessionId, data },
+    // Map backend event names to frontend event names
+    const eventMap: Record<string, string> = {
+      'session.status': 'session:status',
+      'session.qr': 'session:qr',
+      'message.received': 'session:message',
+      'message.sent': 'session:message:sent',
+      'message.ack': 'session:message:ack',
+    };
+
+    const frontendEvent = eventMap[event] || event;
+
+    const eventPayload = {
+      sessionId,
+      event,
+      data,
       timestamp: new Date().toISOString(),
     };
 
-    // Emit to specific session + event room
-    this.server.to(buildRoomName(sessionId, event)).emit('message', eventMessage);
+    // Emit to specific session + event room (API subscribers)
+    this.server.to(buildRoomName(sessionId, event)).emit(frontendEvent, eventPayload);
+    this.server.to(buildRoomName(sessionId, '*')).emit(frontendEvent, eventPayload);
+    this.server.to(buildRoomName('*', event)).emit(frontendEvent, eventPayload);
+    this.server.to(buildRoomName('*', '*')).emit(frontendEvent, eventPayload);
 
-    // Emit to wildcard rooms
-    this.server.to(buildRoomName(sessionId, '*')).emit('message', eventMessage);
-    this.server.to(buildRoomName('*', event)).emit('message', eventMessage);
-    this.server.to(buildRoomName('*', '*')).emit('message', eventMessage);
+    // Broadcast to all connected dashboard clients (who don't join rooms)
+    this.server.emit(frontendEvent, eventPayload);
   }
 
   /**

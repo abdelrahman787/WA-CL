@@ -17,6 +17,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/events': {
+        target: 'http://localhost:2785',
+        ws: true,
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

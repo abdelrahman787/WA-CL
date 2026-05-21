@@ -269,6 +269,15 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     return this.pushName;
   }
 
+  hasCredentials(): boolean {
+    const sessionPath = path.resolve(this.config.sessionDataPath, `session-${this.config.sessionId}`);
+    try {
+      return require('fs').existsSync(sessionPath);
+    } catch {
+      return false;
+    }
+  }
+
   async sendTextMessage(chatId: string, text: string): Promise<MessageResult> {
     this.ensureReady();
     const msg = await this.client!.sendMessage(chatId, text);

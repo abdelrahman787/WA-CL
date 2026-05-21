@@ -65,12 +65,14 @@ export function Sessions() {
   const fetchQR = useCallback(async (sessionId: string) => {
     try {
       const qr = await sessionApi.getQR(sessionId);
-      setQrData({ sessionId, sessionName: currentSessionName.current, qrCode: qr.qrCode });
-      if (qr.status === 'ready') {
+      // If backend returned empty QR (session connected), close modal
+      if (!qr.qrCode || qr.status === 'ready') {
         setQrData(null);
         currentSessionName.current = '';
         fetchSessions();
+        return;
       }
+      setQrData({ sessionId, sessionName: currentSessionName.current, qrCode: qr.qrCode });
     } catch {
       setQrData(null);
       currentSessionName.current = '';
@@ -135,27 +137,40 @@ export function Sessions() {
 
     try {
       await sessionApi.start(id);
-      setSessions(sessions.map(s => (s.id === id ? { ...s, status: 'connecting' } : s)));
+      // Refresh sessions to get updated status
       await fetchSessions();
-      handleShowQR(id);
+      // Don't auto-show QR - let WebSocket status updates handle the UI.
+      // QR modal will only appear if session status becomes 'qr_ready'
     } catch (err) {
       console.error('Failed to start:', err);
       await fetchSessions();
-      if (err instanceof Error && err.message.includes('already started')) {
-        handleShowQR(id);
-      }
     }
   };
 
   const handleShowQR = async (id: string) => {
     const session = sessions.find(s => s.id === id);
     const sessionName = session?.name || '';
+
+    // Don't try to show QR if session is already connected
+    if (session?.status === 'ready') {
+      setQrData(null);
+      return;
+    }
+
     try {
       const qr = await sessionApi.getQR(id);
+      // If backend returned empty QR (session connected), don't show modal
+      if (!qr.qrCode) {
+        setQrData(null);
+        return;
+      }
       setQrData({ sessionId: id, sessionName, qrCode: qr.qrCode });
     } catch (err) {
       console.error('Failed to get QR:', err);
-      setError(t('sessions.qr.unavailable'));
+      // Don't show error for "already authenticated" or "initializing" cases
+      if (err instanceof Error && !err.message.includes('already authenticated') && !err.message.includes('initializing')) {
+        setError(t('sessions.qr.unavailable'));
+      }
     }
   };
 
@@ -443,17 +458,18 @@ export function Sessions() {
                 <span className={`status-pill ${session.status}`}>{formatStatus(session.status)}</span>
               </div>
 
-              {session.status === 'initializing' || session.status === 'connecting' || session.status === 'qr_ready' ? (
+              {session.status === 'qr_ready' ? (
                 <div className="qr-placeholder">
                   <QrCode size={80} className="qr-icon" />
-                  <p>{session.status === 'qr_ready' ? t('sessions.qr.scanToConnect') : t('sessions.qr.preparing')}</p>
-                  <button
-                    className="btn-sm"
-                    onClick={() => handleShowQR(session.id)}
-                    disabled={session.status !== 'qr_ready'}
-                  >
-                    {session.status === 'qr_ready' ? t('sessions.qr.showQr') : t('sessions.qr.loading')}
+                  <p>{t('sessions.qr.scanToConnect')}</p>
+                  <button className="btn-sm" onClick={() => handleShowQR(session.id)}>
+                    {t('sessions.qr.showQr')}
                   </button>
+                </div>
+              ) : session.status === 'initializing' || session.status === 'connecting' ? (
+                <div className="qr-placeholder">
+                  <Loader2 size={48} className="animate-spin" />
+                  <p>{t('sessions.qr.preparing')}</p>
                 </div>
               ) : (
                 <div className="session-info">

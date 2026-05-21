@@ -215,6 +215,7 @@ export interface IWhatsAppEngine {
   getQRCode(): string | null;
   getPhoneNumber(): string | null;
   getPushName(): string | null;
+  hasCredentials(): boolean;
 
   // Messaging - Basic
   sendTextMessage(chatId: string, text: string): Promise<MessageResult>;
