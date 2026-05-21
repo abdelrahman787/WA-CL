@@ -215,6 +215,7 @@ export interface IWhatsAppEngine {
   getQRCode(): string | null;
   getPhoneNumber(): string | null;
   getPushName(): string | null;
+  hasCredentials(): boolean;
 
   // Messaging - Basic
   sendTextMessage(chatId: string, text: string): Promise<MessageResult>;
@@ -286,6 +287,10 @@ export interface IWhatsAppEngine {
   postImageStatus(media: MediaInput, caption?: string): Promise<StatusResult>;
   postVideoStatus(media: MediaInput, caption?: string): Promise<StatusResult>;
   deleteStatus(statusId: string): Promise<void>;
+
+  // Humanize / Typing Simulation
+  simulateTyping(chatId: string): Promise<void>;
+  simulateRecording(chatId: string): Promise<void>;
 
   // Catalog (Phase 3) - WhatsApp Business only
   getCatalog(): Promise<Catalog | null>;

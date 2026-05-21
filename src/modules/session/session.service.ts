@@ -31,6 +31,9 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
   // In-memory map of active engine instances
   private engines: Map<string, IWhatsAppEngine> = new Map();
 
+  // Track last emitted status to prevent duplicate WebSocket events
+  private lastEmittedStatus: Map<string, SessionStatus> = new Map();
+
   // Reconnection state per session
   private reconnectStates: Map<string, ReconnectState> = new Map();
 
@@ -47,7 +50,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
 
   /**
    * On backend startup, reset all active session statuses to disconnected
-   * because the engines are not running yet after restart
+   * because the engines are not running yet after restart.
+   * Then auto-start sessions that have existing credentials on disk.
    */
   async onModuleInit(): Promise<void> {
     const activeStatuses = [
@@ -55,6 +59,7 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
       SessionStatus.INITIALIZING,
       SessionStatus.QR_READY,
       SessionStatus.AUTHENTICATING,
+      SessionStatus.FAILED,
     ];
 
     const result = await this.sessionRepository.update(
@@ -67,6 +72,44 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
         action: 'startup_reset',
         affected: result.affected,
       });
+    }
+
+    // Auto-start sessions that have existing credentials on disk
+    const allSessions = await this.sessionRepository.find();
+    for (const session of allSessions) {
+      if (session.status === SessionStatus.DISCONNECTED) {
+        const hasCreds = this.engineFactory.hasCredentials({
+          sessionId: session.name,
+          sessionDataPath: process.env.SESSION_DATA_PATH || './data/sessions',
+        });
+        if (hasCreds) {
+          // Clean up any stale browser lock files from previous runs
+          try {
+            const fs = require('fs');
+            const sessionPath = `${process.env.SESSION_DATA_PATH || './data/sessions'}/session-${session.name}`;
+            const lockFile = `${sessionPath}/SingletonLock`;
+            if (fs.existsSync(lockFile)) {
+              fs.unlinkSync(lockFile);
+              this.logger.log(`Removed stale SingletonLock for session: ${session.name}`, {
+                sessionId: session.id,
+                action: 'auto_start_cleanup',
+              });
+            }
+          } catch { /* ignore cleanup errors */ }
+
+          this.logger.log(`Auto-starting session with existing credentials: ${session.name}`, {
+            sessionId: session.id,
+            action: 'auto_start',
+          });
+          // Fire and forget - don't block server startup
+          void this.start(session.id).catch(error => {
+            this.logger.error(`Auto-start failed for session ${session.name}`, String(error), {
+              sessionId: session.id,
+              action: 'auto_start_failed',
+            });
+          });
+        }
+      }
     }
   }
 
@@ -427,13 +470,16 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
     if (engine) {
       await engine.disconnect();
       this.engines.delete(id);
+      // engine.disconnect() triggers onDisconnected callback which updates status + emits WebSocket
+    } else {
+      // No engine running, update status manually
+      await this.updateStatus(id, SessionStatus.DISCONNECTED);
     }
 
     this.logger.log(`Session stopped: ${session.name}`, {
       sessionId: id,
       action: 'stop',
     });
-    await this.updateStatus(id, SessionStatus.DISCONNECTED);
     return this.findOne(id);
   }
 
@@ -445,11 +491,20 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
       throw new BadRequestException('Session is not started. Call POST /sessions/:id/start first.');
     }
 
+    // If session is already authenticated, return status without QR
+    if (session.status === SessionStatus.READY) {
+      return {
+        qrCode: '',
+        status: session.status,
+      };
+    }
+
     const qrCode = engine.getQRCode();
 
     if (!qrCode) {
-      if (session.status === SessionStatus.READY) {
-        throw new BadRequestException('Session is already authenticated, no QR code needed');
+      if (session.status === SessionStatus.INITIALIZING || session.status === SessionStatus.AUTHENTICATING) {
+        // Session is still initializing or authenticating - QR may not be needed
+        throw new BadRequestException('Session is initializing. Please wait...');
       }
       throw new BadRequestException('QR code is not ready yet. Please wait...');
     }
@@ -480,7 +535,11 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
   }
 
   private async updateStatus(id: string, status: SessionStatus): Promise<void> {
+    // Dedup: skip if we already emitted this status for this session
+    if (this.lastEmittedStatus.get(id) === status) return;
+
     await this.sessionRepository.update(id, { status });
+    this.lastEmittedStatus.set(id, status);
     this.logger.debug(`Session status updated to ${status}`, {
       sessionId: id,
       status,

@@ -269,6 +269,15 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     return this.pushName;
   }
 
+  hasCredentials(): boolean {
+    const sessionPath = path.resolve(this.config.sessionDataPath, `session-${this.config.sessionId}`);
+    try {
+      return require('fs').existsSync(sessionPath);
+    } catch {
+      return false;
+    }
+  }
+
   async sendTextMessage(chatId: string, text: string): Promise<MessageResult> {
     this.ensureReady();
     const msg = await this.client!.sendMessage(chatId, text);
@@ -837,6 +846,22 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     const newCode = await (chat as unknown as GroupChat).revokeInvite();
     this.logger.log(`Revoked invite code for group ${groupId}, new code generated`);
     return String(newCode);
+  }
+
+  // ========== Humanize / Typing Simulation ==========
+
+  async simulateTyping(chatId: string): Promise<void> {
+    this.ensureReady();
+    const chat = await this.client!.getChatById(chatId);
+    await (chat as unknown as GroupChat).sendStateTyping();
+    this.logger.debug(`Typing indicator sent to ${chatId}`);
+  }
+
+  async simulateRecording(chatId: string): Promise<void> {
+    this.ensureReady();
+    const chat = await this.client!.getChatById(chatId);
+    await (chat as unknown as GroupChat).sendStateRecording();
+    this.logger.debug(`Recording indicator sent to ${chatId}`);
   }
 
   // ========== Status/Stories (Phase 3) ==========

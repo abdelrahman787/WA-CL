@@ -131,4 +131,17 @@ export class EngineFactory implements OnModuleInit {
   getCurrentEngine(): string {
     return this.engineType;
   }
+
+  /**
+   * Check if a session has existing credentials on disk without initializing it.
+   * Used for auto-start on server boot.
+   */
+  hasCredentials(options: { sessionId: string; sessionDataPath: string }): boolean {
+    const sessionPath = `${options.sessionDataPath}/session-${options.sessionId}`;
+    try {
+      return require('fs').existsSync(sessionPath);
+    } catch {
+      return false;
+    }
+  }
 }

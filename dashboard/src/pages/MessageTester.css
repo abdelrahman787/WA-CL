@@ -220,3 +220,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+.humanize-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-light);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.humanize-toggle label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.humanize-toggle input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--primary);
+}

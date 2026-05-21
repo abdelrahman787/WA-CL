@@ -25,9 +25,8 @@ interface WebSocketEvents {
   onMessage?: (event: MessageEvent) => void;
 }
 
-// Use current origin for WebSocket (goes through nginx proxy in Docker)
-// Falls back to env var or localhost for development
-const SOCKET_URL = import.meta.env.VITE_WS_URL || window.location.origin;
+// In dev mode, connect directly to the API server since Vite proxy doesn't handle WebSocket well
+const SOCKET_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:2785' : window.location.origin);
 
 export function useWebSocket(events: WebSocketEvents = {}) {
   const socketRef = useRef<Socket | null>(null);
@@ -93,7 +92,16 @@ export function useWebSocket(events: WebSocketEvents = {}) {
     const socket = socketRef.current;
 
     if (events.onSessionStatus) {
-      socket.on('session:status', events.onSessionStatus);
+      const handler = (payload: Record<string, unknown>) => {
+        // Adapt both flat and nested event payloads
+        const adapted: SessionStatusEvent = {
+          sessionId: (payload.sessionId || payload.data && (payload.data as Record<string, unknown>).sessionId) as string,
+          status: (payload.status || payload.data && (payload.data as Record<string, unknown>).status) as string,
+          timestamp: payload.timestamp as string,
+        };
+        events.onSessionStatus!(adapted);
+      };
+      socket.on('session:status', handler);
     }
 
     if (events.onQRCode) {

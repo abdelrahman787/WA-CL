@@ -9,6 +9,7 @@ import {
   Min,
   Max,
   ArrayMaxSize,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -72,6 +73,20 @@ class BulkMessageOptionsDto {
   @IsOptional()
   @IsBoolean()
   stopOnError?: boolean;
+
+  @ApiPropertyOptional({ description: 'Enable human-like typing simulation for text messages', default: false })
+  @IsOptional()
+  @IsBoolean()
+  humanize?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Typing speed for humanize mode',
+    enum: ['slow', 'normal', 'fast'],
+    default: 'normal',
+  })
+  @IsOptional()
+  @IsEnum(['slow', 'normal', 'fast'])
+  typingSpeed?: 'slow' | 'normal' | 'fast';
 }
 
 export class SendBulkMessageDto {
