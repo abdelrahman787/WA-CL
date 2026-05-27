@@ -61,6 +61,7 @@
     "messageTester": "Message Tester",
     "infrastructure": "Infrastructure",
     "plugins": "Plugins",
+    "import": "Import",
     "logs": "Logs"
   },
   "errorBoundary": {
