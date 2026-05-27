@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { promises as fs } from 'fs';
+import { promises as fs, createReadStream } from 'fs';
 import * as path from 'path';
+import * as unzipper from 'unzipper';
 
 /**
- * ZIP extraction.
+ * Streaming ZIP extraction.
  *
- * Skeleton — switches over to `unzipper` when the dep is installed.
- * Until then it throws a clear error so the orchestrator can mark the
- * job as failed with a recoverable message.
+ * Implemented with `unzipper`'s Parse stream so we never hold the whole
+ * archive in memory — each entry is piped straight to disk and the
+ * stream is drained before moving on.
  */
 @Injectable()
 export class ZipExtractorService {
@@ -15,51 +16,57 @@ export class ZipExtractorService {
 
   async extract(zipFilePath: string, destDir: string): Promise<string[]> {
     await fs.mkdir(destDir, { recursive: true });
-
-    const unzipper = await this.tryLoad();
-    if (!unzipper) {
-      throw new Error(
-        'ZIP extraction unavailable: install `unzipper` (`npm i unzipper`) ' +
-          'and rebuild. See docs/windows/PLAN.md.',
-      );
-    }
-
-    // Lazy implementation guarded behind the optional dep.
     const out: string[] = [];
-    const directory = await unzipper.Open.file(zipFilePath);
-    for (const entry of directory.files) {
-      if (entry.type !== 'File') continue;
-      const target = path.join(destDir, entry.path);
-      await fs.mkdir(path.dirname(target), { recursive: true });
-      const content = await entry.buffer();
-      await fs.writeFile(target, content);
-      out.push(target);
-    }
+
+    await new Promise<void>((resolve, reject) => {
+      const stream = createReadStream(zipFilePath)
+        .pipe(unzipper.Parse({ forceStream: true }));
+
+      stream.on('entry', (entry: unzipper.Entry) => {
+        const relPath = this.sanitize(entry.path);
+        if (!relPath) {
+          entry.autodrain();
+          return;
+        }
+        const target = path.join(destDir, relPath);
+        if (entry.type === 'Directory') {
+          fs.mkdir(target, { recursive: true })
+            .then(() => entry.autodrain())
+            .catch(reject);
+          return;
+        }
+        fs.mkdir(path.dirname(target), { recursive: true })
+          .then(() => {
+            const ws = require('fs').createWriteStream(target);
+            entry
+              .pipe(ws)
+              .on('finish', () => { out.push(target); })
+              .on('error', reject);
+          })
+          .catch(reject);
+      });
+
+      stream.on('close', () => resolve());
+      stream.on('error', reject);
+    });
+
     return out;
   }
 
   async listContents(zipFilePath: string): Promise<string[]> {
-    const unzipper = await this.tryLoad();
-    if (!unzipper) throw new Error('unzipper not installed');
     const directory = await unzipper.Open.file(zipFilePath);
-    return directory.files.filter((f: { type: string }) => f.type === 'File').map((f: { path: string }) => f.path);
+    return directory.files
+      .filter(f => f.type === 'File')
+      .map(f => f.path);
   }
 
-  private async tryLoad(): Promise<UnzipperLike | null> {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('unzipper') as UnzipperLike;
-    } catch {
-      this.logger.warn('unzipper not installed — ZIP extraction disabled.');
-      return null;
-    }
+  /**
+   * Block zip-slip: refuse absolute paths or anything that escapes the
+   * destination via `..`.
+   */
+  private sanitize(entryPath: string): string | null {
+    const normalized = path.normalize(entryPath).replace(/^[/\\]+/, '');
+    if (normalized.startsWith('..') || path.isAbsolute(normalized)) return null;
+    return normalized;
   }
-}
-
-interface UnzipperLike {
-  Open: {
-    file(p: string): Promise<{
-      files: Array<{ type: string; path: string; buffer(): Promise<Buffer> }>;
-    }>;
-  };
 }

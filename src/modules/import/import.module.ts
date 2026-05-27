@@ -10,9 +10,11 @@ import { ZipExtractorService } from './extractors/zip-extractor.service';
 import { RarExtractorService } from './extractors/rar-extractor.service';
 import { ImportJob } from './entities/import-job.entity';
 import { ImportedMessage } from './entities/imported-message.entity';
+import { Message } from '../message/entities/message.entity';
+import { Session } from '../session/entities/session.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ImportJob, ImportedMessage], 'data')],
+  imports: [TypeOrmModule.forFeature([ImportJob, ImportedMessage, Message, Session], 'data')],
   controllers: [ImportController],
   providers: [
     ImportService,

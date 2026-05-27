@@ -2,17 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { createExtractorFromFile } from 'node-unrar-js';
 
 /**
- * RAR extraction.
+ * RAR extraction with two strategies, picked at runtime:
  *
- * Two paths:
- *   1. If `7z.exe` is found on Windows (default install), shell out to it.
- *      This is the recommended path on Windows Server.
- *   2. Otherwise try `node-unrar-js` if installed.
+ *  1. `node-unrar-js` — pure WASM, works on every platform. Default.
+ *  2. Shell out to `7z.exe` — used on Windows when WASM init fails or
+ *     when the bundled binary is present at `tools/7zip/7z.exe`.
  *
- * If neither is available we throw a recoverable error so the import
- * job can be marked as failed cleanly.
+ * Both write to `destDir` and return absolute paths of regular files.
+ * The dest dir is created if absent.
  */
 @Injectable()
 export class RarExtractorService {
@@ -21,18 +21,18 @@ export class RarExtractorService {
   async extract(rarFilePath: string, destDir: string): Promise<string[]> {
     await fs.mkdir(destDir, { recursive: true });
 
-    const sevenZip = await this.findSevenZip();
-    if (sevenZip) {
-      await this.runSevenZip(sevenZip, rarFilePath, destDir);
-    } else {
-      const lib = await this.tryLoadUnrar();
-      if (!lib) {
+    try {
+      await this.extractWithUnrarJs(rarFilePath, destDir);
+    } catch (err) {
+      this.logger.warn(`node-unrar-js failed (${(err as Error).message}); trying 7-Zip fallback`);
+      const sevenZip = await this.findSevenZip();
+      if (!sevenZip) {
         throw new Error(
-          'RAR extraction unavailable: install 7-Zip on PATH (recommended on Windows) ' +
-            'OR `npm i node-unrar-js`. See docs/windows/PLAN.md.',
+          'RAR extraction failed and no 7-Zip fallback found. ' +
+            'Install 7-Zip on PATH or bundle tools/7zip/7z.exe.',
         );
       }
-      throw new Error('node-unrar-js fallback not yet implemented — install 7-Zip.');
+      await this.runSevenZip(sevenZip, rarFilePath, destDir);
     }
 
     return this.walk(destDir);
@@ -43,10 +43,7 @@ export class RarExtractorService {
     try {
       const buf = Buffer.alloc(8);
       await fd.read(buf, 0, 8, 0);
-      // RAR4: 52 61 72 21 1A 07 00
-      // RAR5: 52 61 72 21 1A 07 01 00
       if (buf[0] === 0x52 && buf[1] === 0x61 && buf[2] === 0x72 && buf[3] === 0x21) return 'rar';
-      // ZIP: 50 4B 03 04
       if (buf[0] === 0x50 && buf[1] === 0x4b) return 'zip';
       return 'unknown';
     } finally {
@@ -54,10 +51,26 @@ export class RarExtractorService {
     }
   }
 
-  // ---- helpers ----------------------------------------------------------
+  // ---- strategy 1: node-unrar-js ---------------------------------------
+
+  private async extractWithUnrarJs(rarFilePath: string, destDir: string): Promise<void> {
+    const extractor = await createExtractorFromFile({
+      filepath: rarFilePath,
+      targetPath: destDir,
+    });
+    // Generator-based: pull every entry to drain extraction.
+    const result = extractor.extract();
+    for (const _file of result.files) {
+      // intentional drain
+      void _file;
+    }
+  }
+
+  // ---- strategy 2: shell out to 7z.exe ---------------------------------
 
   private async findSevenZip(): Promise<string | null> {
     const candidates = [
+      path.join(process.cwd(), 'tools', '7zip', '7z.exe'),
       'C:\\Program Files\\7-Zip\\7z.exe',
       'C:\\Program Files (x86)\\7-Zip\\7z.exe',
     ];
@@ -65,9 +78,7 @@ export class RarExtractorService {
       try {
         await fs.access(c);
         return c;
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
     }
     return null;
   }
@@ -83,15 +94,6 @@ export class RarExtractorService {
         else reject(new Error(`7z exited ${code}: ${stderr.slice(0, 500)}`));
       });
     });
-  }
-
-  private async tryLoadUnrar(): Promise<unknown | null> {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('node-unrar-js') as unknown;
-    } catch {
-      return null;
-    }
   }
 
   private async walk(dir: string): Promise<string[]> {
