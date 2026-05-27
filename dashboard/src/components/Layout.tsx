@@ -11,6 +11,7 @@ import {
   Send,
   Server,
   Puzzle,
+  Upload,
   Sun,
   Moon,
   Monitor,
@@ -38,6 +39,7 @@ const allNavItems = [
   { to: '/message-tester', icon: Send, key: 'messageTester' as const, adminOnly: false },
   { to: '/infrastructure', icon: Server, key: 'infrastructure' as const, adminOnly: false },
   { to: '/plugins', icon: Puzzle, key: 'plugins' as const, adminOnly: true },
+  { to: '/import', icon: Upload, key: 'import' as const, adminOnly: false },
   { to: '/logs', icon: FileText, key: 'logs' as const, adminOnly: false },
 ];
 
