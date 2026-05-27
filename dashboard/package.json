@@ -12,6 +12,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-table": "^8.21.3",
+    "@types/react-window": "^1.8.8",
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.16.0",
@@ -19,6 +20,7 @@
     "react-dom": "^19.2.6",
     "react-i18next": "^17.0.8",
     "react-router-dom": "^7.15.1",
+    "react-window": "^2.2.7",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
