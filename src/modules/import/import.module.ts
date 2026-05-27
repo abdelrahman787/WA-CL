@@ -12,9 +12,13 @@ import { ImportJob } from './entities/import-job.entity';
 import { ImportedMessage } from './entities/imported-message.entity';
 import { Message } from '../message/entities/message.entity';
 import { Session } from '../session/entities/session.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ImportJob, ImportedMessage, Message, Session], 'data')],
+  imports: [
+    TypeOrmModule.forFeature([ImportJob, ImportedMessage, Message, Session], 'data'),
+    AuthModule,
+  ],
   controllers: [ImportController],
   providers: [
     ImportService,

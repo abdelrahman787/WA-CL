@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ShutdownService } from './common/services/shutdown.service';
+import { extractIPv4FromOrigin, ipInCidr, TAILSCALE_CIDR } from './common/utils/cidr.util';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -104,18 +105,32 @@ async function bootstrap() {
   );
 
   // CORS Configuration (Phase 3 Security Audit)
+  //
+  // Origins are allowed if any of the following match:
+  //   - the wildcard '*' is in the list;
+  //   - the literal origin appears in the list;
+  //   - CORS_ALLOW_TAILSCALE=true (default) AND the origin's hostname
+  //     is an IPv4 in the Tailscale tailnet range 100.64.0.0/10.
+  // The Tailscale rule means a freshly-provisioned tailnet node can
+  // reach the dashboard without an operator updating CORS_ORIGINS.
   const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()) || ['*'];
+  const allowTailscale = (process.env.CORS_ALLOW_TAILSCALE ?? 'true').toLowerCase() !== 'false';
+
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (mobile apps, Postman, server-to-server)
       if (!origin) return callback(null, true);
 
-      // Check if wildcard or origin matches
       if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
       }
+
+      if (allowTailscale) {
+        const ip = extractIPv4FromOrigin(origin);
+        if (ip && ipInCidr(ip, TAILSCALE_CIDR)) return callback(null, true);
+      }
+
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

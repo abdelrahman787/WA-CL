@@ -113,7 +113,31 @@ try {
     Write-Ok 'dependencies installed'
 
     # -----------------------------------------------------------------------
-    # 5. Firewall
+    # 5. RAR extraction toolchain
+    # -----------------------------------------------------------------------
+    #
+    # node-unrar-js is the primary RAR extractor and works on every node
+    # build. The 7-Zip fallback is only used when WASM init fails (rare),
+    # but we download 7zr.exe anyway so operators never have to think
+    # about it. 7zr is the standalone CLI (~600 KB) — small enough to
+    # bundle alongside the app.
+    $sevenZrPath = Join-Path $repo 'tools\7zip\7z.exe'
+    if (-not (Test-Path $sevenZrPath)) {
+        Write-Info 'Downloading 7zr.exe (RAR fallback) ...'
+        $toolsDir = Split-Path $sevenZrPath
+        if (-not (Test-Path $toolsDir)) { New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null }
+        try {
+            Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile $sevenZrPath -UseBasicParsing
+            Write-Ok "7zr.exe installed at $sevenZrPath"
+        } catch {
+            Write-Warn2 "could not download 7zr.exe: $($_.Exception.Message) — RAR fallback unavailable"
+        }
+    } else {
+        Write-Ok "7zr.exe already present at $sevenZrPath"
+    }
+
+    # -----------------------------------------------------------------------
+    # 6. Firewall
     # -----------------------------------------------------------------------
     if (-not $SkipFirewall) {
         Write-Info 'Configuring Windows Firewall rules (Tailscale-only)...'
@@ -121,12 +145,12 @@ try {
     }
 
     # -----------------------------------------------------------------------
-    # 6. Tailscale info file
+    # 7. Tailscale info file
     # -----------------------------------------------------------------------
     & "$PSScriptRoot\tailscale-info.ps1" | Out-Null
 
     # -----------------------------------------------------------------------
-    # 7. Service install (optional)
+    # 8. Service install (optional)
     # -----------------------------------------------------------------------
     if (-not $SkipServiceInstall) {
         Write-Info 'Installing Windows services via NSSM...'

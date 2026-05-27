@@ -12,6 +12,8 @@ import { ImportedMessage } from './entities/imported-message.entity';
 import { Message, MessageDirection, MessageStatus } from '../message/entities/message.entity';
 import { Session, SessionStatus } from '../session/entities/session.entity';
 import { StorageService } from '../../common/storage/storage.service';
+import { AuthService } from '../auth/auth.service';
+import { ApiKeyRole } from '../auth/entities/api-key.entity';
 import { ChatParserService } from './parsers/chat-parser.service';
 import { MediaMatcherService } from './parsers/media-matcher.service';
 import { ZipExtractorService } from './extractors/zip-extractor.service';
@@ -48,6 +50,7 @@ export class ImportService {
     private readonly gateway: ImportGateway,
     private readonly storage: StorageService,
     private readonly config: ConfigService,
+    private readonly authService: AuthService,
   ) {}
 
   async createJob(file: UploadedFile, sessionId?: string): Promise<ImportJob> {
@@ -169,17 +172,35 @@ export class ImportService {
 
   async mapUsers(jobId: string, dto: MapUsersDto): Promise<ImportJob> {
     const job = await this.findJob(jobId);
-    const mapping: Record<string, string> = {};
+    const mapping: Record<string, string> = { ...(job.userMapping ?? {}) };
+
     for (const m of dto.mappings) {
       if (m.action === 'map_existing' && m.existingUserId) {
         mapping[m.senderName] = m.existingUserId;
-      } else if (m.action === 'create_new') {
-        // TODO: create user via auth module, capture new id
-        mapping[m.senderName] = `pending:${m.senderName}`;
-      } else {
-        mapping[m.senderName] = 'anonymous';
+        continue;
       }
+      if (m.action === 'create_new') {
+        // OpenWA's auth model is API-key-based, not username/password. We
+        // mint a VIEWER-scoped ApiKey to represent the imported participant
+        // so downstream features (chat ownership, audit) have a real id.
+        const displayName = m.newUserData?.displayName || m.senderName;
+        try {
+          const { apiKey } = await this.authService.createApiKey({
+            name: `imported:${displayName}`.slice(0, 100),
+            role: ApiKeyRole.VIEWER,
+          });
+          mapping[m.senderName] = apiKey.id;
+        } catch (err) {
+          this.logger.warn(
+            `createApiKey failed for ${m.senderName}: ${(err as Error).message} — falling back to synthetic id`,
+          );
+          mapping[m.senderName] = `imported-user:${uuidv4()}`;
+        }
+        continue;
+      }
+      mapping[m.senderName] = 'anonymous';
     }
+
     job.userMapping = mapping;
     job.status = 'mapping_users' as ImportStage;
     return this.jobRepo.save(job);

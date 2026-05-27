@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import type { ImportWizardState } from '../ImportWizard';
 
@@ -17,15 +17,14 @@ interface PreviewMessage {
 interface Props { state: ImportWizardState; next: () => void; }
 
 const PAGE_SIZE = 1000;
-const ROW_HEIGHT = 88;
+const ROW_HEIGHT = 120;
+const IMAGE_TYPES = new Set(['image', 'sticker']);
 
 export function Step3Preview({ state, next }: Props) {
   const [items, setItems] = useState<PreviewMessage[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all messages in batches so the list can virtualize across the
-  // entire chat (no manual pagination).
   useEffect(() => {
     if (!state.jobId) return;
     const apiKey = sessionStorage.getItem('openwa_api_key') ?? '';
@@ -70,7 +69,7 @@ export function Step3Preview({ state, next }: Props) {
           rowCount={items.length}
           rowHeight={ROW_HEIGHT}
           rowComponent={PreviewRow}
-          rowProps={{ items, firstSender }}
+          rowProps={{ items, firstSender, jobId: state.jobId ?? '' }}
           overscanCount={8}
           style={{ height: '100%' }}
         />
@@ -90,7 +89,8 @@ function PreviewRow({
   style,
   items,
   firstSender,
-}: RowComponentProps<{ items: PreviewMessage[]; firstSender: string | undefined }>) {
+  jobId,
+}: RowComponentProps<{ items: PreviewMessage[]; firstSender: string | undefined; jobId: string }>) {
   const m = items[index];
   if (!m) return <div style={style} />;
   if (m.isSystemMessage) {
@@ -107,13 +107,72 @@ function PreviewRow({
         <div className="sender">{m.originalSenderName}</div>
         {m.textContent && <div>{m.textContent}</div>}
         {m.mediaFileName && (
-          <div style={{ fontSize: '0.85rem' }}>
-            {m.mediaMatched ? '📎 ' : '⚠️ '}{m.mediaFileName}
-            {!m.mediaMatched && ' (not in archive)'}
-          </div>
+          <MediaPreview jobId={jobId} message={m} />
         )}
         <div className="ts">{new Date(m.originalTimestamp).toLocaleString()}</div>
       </div>
     </div>
   );
+}
+
+function MediaPreview({ jobId, message }: { jobId: string; message: PreviewMessage }) {
+  const showImage = message.mediaMatched && IMAGE_TYPES.has(message.messageType);
+  const url = useAuthedBlob(showImage ? `/api/import/jobs/${jobId}/media/${message.id}` : null);
+
+  if (!message.mediaMatched) {
+    return (
+      <div style={{ fontSize: '0.85rem', color: '#9ca3af' }}>
+        ⚠️ {message.mediaFileName} (not in archive)
+      </div>
+    );
+  }
+  if (showImage && url) {
+    return (
+      <img
+        src={url}
+        alt={message.mediaFileName ?? ''}
+        style={{ maxWidth: 160, maxHeight: 90, borderRadius: 4, objectFit: 'cover' }}
+        loading="lazy"
+      />
+    );
+  }
+  return (
+    <div style={{ fontSize: '0.85rem' }}>
+      📎 {message.mediaFileName}
+    </div>
+  );
+}
+
+/**
+ * Fetch a protected resource with the dashboard API key and expose the
+ * response body as an object-URL safe for direct `<img>` rendering.
+ * Cancellation on unmount; revokes the URL to avoid leaks.
+ */
+function useAuthedBlob(href: string | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  const lastUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!href) { setUrl(null); return; }
+    let cancelled = false;
+    const apiKey = sessionStorage.getItem('openwa_api_key') ?? '';
+    fetch(href, { headers: { 'X-API-Key': apiKey } })
+      .then(r => (r.ok ? r.blob() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(b => {
+        if (cancelled) return;
+        const u = URL.createObjectURL(b);
+        lastUrlRef.current = u;
+        setUrl(u);
+      })
+      .catch(() => { if (!cancelled) setUrl(null); });
+    return () => {
+      cancelled = true;
+      if (lastUrlRef.current) {
+        URL.revokeObjectURL(lastUrlRef.current);
+        lastUrlRef.current = null;
+      }
+    };
+  }, [href]);
+
+  return url;
 }
