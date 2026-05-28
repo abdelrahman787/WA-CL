@@ -78,29 +78,51 @@ async function bootstrap() {
   });
 
   // Enhanced Security Headers (Phase 3 Security Audit)
+  //
+  // Deployment reality: on Windows + Tailscale the dashboard is served by
+  // this same process over plain HTTP (no TLS terminator). The strict,
+  // HTTPS-oriented defaults break that setup:
+  //   - `upgrade-insecure-requests` rewrites every asset URL to https://,
+  //     which fails with ERR_SSL_PROTOCOL_ERROR on an HTTP-only host;
+  //   - HSTS would pin the browser to HTTPS for future visits;
+  //   - `script-src 'self'` blocks the bundled SPA's blob: workers, the
+  //     inline service-worker registration, and blob: image thumbnails.
+  //
+  // Set ENABLE_HTTPS=true only when a real TLS terminator is in front to
+  // restore the hardened HTTPS posture.
+  const httpsMode = (process.env.ENABLE_HTTPS ?? 'false').toLowerCase() === 'true';
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'"],
-          fontSrc: ["'self'"],
+          // 'unsafe-inline' + blob: are required by the Vite-built SPA
+          // (inline SW registration, blob: web-workers).
+          scriptSrc: ["'self'", "'unsafe-inline'", 'blob:'],
+          scriptSrcElem: ["'self'", "'unsafe-inline'", 'blob:'],
+          workerSrc: ["'self'", 'blob:'],
+          // blob: powers in-app media thumbnails (URL.createObjectURL).
+          imgSrc: ["'self'", 'data:', 'blob:', 'http:', 'https:'],
+          // same-origin API + WebSocket (socket.io) over ws/wss.
+          connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
+          fontSrc: ["'self'", 'data:'],
           objectSrc: ["'none'"],
-          upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+          // Only force HTTPS upgrades when we actually serve HTTPS.
+          upgradeInsecureRequests: httpsMode ? [] : null,
         },
       },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true,
-      },
+      // HSTS is meaningless (and harmful) without TLS — disable in HTTP mode.
+      hsts: httpsMode
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false,
       noSniff: true,
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       // Disable for API usage
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      // COOP is ignored over HTTP anyway; skip it in HTTP mode to avoid
+      // the noisy "origin untrustworthy" console warnings.
+      crossOriginOpenerPolicy: httpsMode ? undefined : false,
     }),
   );
 

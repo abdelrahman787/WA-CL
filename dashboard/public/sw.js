@@ -7,7 +7,7 @@
 //   - Cache-first for static assets (JS/CSS/img) so repeat loads are
 //     instant even on poor links.
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = `openwa-shell-${VERSION}`;
 const RUNTIME_CACHE = `openwa-runtime-${VERSION}`;
 
