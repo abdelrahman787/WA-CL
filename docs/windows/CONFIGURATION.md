@@ -1,5 +1,40 @@
 # Configuration
 
+## Single-port deployment (recommended on Windows)
+
+The API process serves the compiled dashboard directly, so **one port
+(`API_PORT`, default 2785) serves both the UI and the API**. There is no
+second static server, no reverse proxy, and no CORS to configure:
+
+- Dashboard: `http://<tailscale-ip>:2785/`
+- API:       `http://<tailscale-ip>:2785/api`
+- Swagger:   `http://<tailscale-ip>:2785/api/docs`
+
+The frontend calls the API at the relative path `/api`, so it always
+talks to the same origin it was served from — no hardcoded IP, ever.
+`build.ps1` copies `dashboard/dist` into `dist/public`, which the backend
+serves (SPA deep links fall back to `index.html`). To disable static
+serving and run the API headless, set `SERVE_DASHBOARD=false`.
+
+`DASHBOARD_PORT` is only relevant if you choose to run a separate static
+server for the UI; the single-port setup ignores it.
+
+### The API key
+
+On first boot OpenWA seeds an admin key. Precedence:
+
+1. `API_KEY` from `.env` (recommended — pins a stable, known key so the
+   dashboard login and `.env` always agree);
+2. a predictable dev key when `NODE_ENV` is not `production`;
+3. a random `owa_k1_...` key in production.
+
+The seeded key is also written to `data/.api-key` and printed in the
+startup banner. To rotate it, stop the service, delete the `api_keys`
+row (or the whole `data/main.sqlite`) plus `data/.api-key`, set the new
+`API_KEY` in `.env`, and restart.
+
+---
+
 OpenWA reads configuration in this priority order (highest wins):
 
 1. **Real process environment** (set by Windows service / shell)
