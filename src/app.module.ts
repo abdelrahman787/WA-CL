@@ -2,6 +2,9 @@ import { Module, DynamicModule, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import configuration from './config/configuration';
 import { SessionModule } from './modules/session/session.module';
 import { MessageModule } from './modules/message/message.module';
@@ -38,6 +41,37 @@ if (process.env.QUEUE_ENABLED === 'true') {
   queueModules.push(queueModule.QueueModule);
 }
 
+// Serve the built React dashboard from the API process itself so that a
+// single port (API_PORT) serves both the UI and the API. This removes the
+// need for a second static server, a reverse proxy, CORS, or a hardcoded
+// API base URL in the frontend (it uses the relative '/api').
+//
+// The dashboard build is looked up at a few candidate locations so it works
+// whether you run `node dist/main.js` (production) or via ts-node (dev).
+// If no build is found, static serving is silently skipped and the API
+// still runs headless.
+function resolveDashboardRoot(): string | null {
+  const candidates = [
+    join(__dirname, 'public'), // dist/public (build.ps1 copies here)
+    join(process.cwd(), 'dist', 'public'),
+    join(process.cwd(), 'dashboard', 'dist'),
+  ];
+  return candidates.find(p => existsSync(join(p, 'index.html'))) ?? null;
+}
+
+const staticModules: Array<Type | DynamicModule> = [];
+const dashboardRoot = process.env.SERVE_DASHBOARD === 'false' ? null : resolveDashboardRoot();
+if (dashboardRoot) {
+  staticModules.push(
+    ServeStaticModule.forRoot({
+      rootPath: dashboardRoot,
+      // Never let the SPA fallback swallow API or WebSocket routes.
+      exclude: ['/api/{*splat}', '/socket.io/{*splat}'],
+      serveStaticOptions: { index: ['index.html'] },
+    }),
+  );
+}
+
 @Module({
   imports: [
     // Configuration
@@ -45,6 +79,9 @@ if (process.env.QUEUE_ENABLED === 'true') {
       isGlobal: true,
       load: [configuration],
     }),
+
+    // Serve the compiled dashboard (if present) from this process.
+    ...staticModules,
 
     // Main Database (always SQLite - boot config)
     TypeOrmModule.forRootAsync({
