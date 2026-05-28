@@ -1,56 +1,50 @@
-// OpenWA service worker — minimal app-shell cache.
+// OpenWA service worker.
 //
-// Strategy:
-//   - Pre-cache the shell on install.
-//   - Network-first for /api/* — falls back to cache only if the cached
-//     response is still fresh enough for offline browsing.
-//   - Cache-first for static assets (JS/CSS/img) so repeat loads are
-//     instant even on poor links.
+// IMPORTANT lesson: a service worker that caches the HTML navigation
+// response also replays that response's HEADERS (including
+// Content-Security-Policy). If the shell is cached while a strict/old CSP
+// is active, the browser keeps enforcing that stale CSP even after the
+// server starts sending a corrected one. To avoid this class of bug:
+//
+//   - Navigations (HTML) are NEVER handled by the SW — they pass straight
+//     through to the network, so CSP and other headers are always fresh.
+//   - Only content-addressed, hashed /assets/ are cached (safe: a new
+//     build produces new filenames).
+//   - /api and /socket.io are never touched.
+//
+// The manifest + icons still make the app installable ("Add to Home
+// Screen") without the SW caching the shell.
 
-const VERSION = 'v2';
-const SHELL_CACHE = `openwa-shell-${VERSION}`;
-const RUNTIME_CACHE = `openwa-runtime-${VERSION}`;
+const VERSION = 'v3';
+const ASSET_CACHE = `openwa-assets-${VERSION}`;
 
-const SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/openwa_logo.webp',
-  '/favicon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png',
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting())
-  );
+self.addEventListener('install', () => {
+  // Activate immediately; nothing to pre-cache.
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k !== SHELL_CACHE && k !== RUNTIME_CACHE)
-          .map((k) => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== ASSET_CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  // Never handle navigations/HTML — let the network serve fresh headers.
+  if (req.mode === 'navigate') return;
+  const accept = req.headers.get('accept') || '';
+  if (accept.includes('text/html')) return;
+
   const url = new URL(req.url);
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return;
 
-  // Don't cache /api or WebSocket upgrades.
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) {
-    return;
-  }
-
-  // Cache-first for hashed Vite assets.
+  // Cache-first only for immutable, hashed build assets.
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
       caches.match(req).then((cached) => {
@@ -58,7 +52,7 @@ self.addEventListener('fetch', (event) => {
         return fetch(req).then((res) => {
           if (res.ok) {
             const clone = res.clone();
-            caches.open(RUNTIME_CACHE).then((c) => c.put(req, clone));
+            caches.open(ASSET_CACHE).then((c) => c.put(req, clone));
           }
           return res;
         });
@@ -67,16 +61,5 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for everything else, fall back to cache when offline.
-  event.respondWith(
-    fetch(req)
-      .then((res) => {
-        if (res.ok && (url.origin === self.location.origin)) {
-          const clone = res.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, clone));
-        }
-        return res;
-      })
-      .catch(() => caches.match(req).then((cached) => cached || caches.match('/index.html')))
-  );
+  // Everything else: plain network passthrough (no caching of headers).
 });
