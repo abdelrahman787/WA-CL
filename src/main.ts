@@ -96,7 +96,8 @@ async function bootstrap() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          styleSrcElem: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           // 'unsafe-inline' + blob: are required by the Vite-built SPA
           // (inline SW registration, blob: web-workers).
           scriptSrc: ["'self'", "'unsafe-inline'", 'blob:'],
@@ -106,7 +107,7 @@ async function bootstrap() {
           imgSrc: ["'self'", 'data:', 'blob:', 'http:', 'https:'],
           // same-origin API + WebSocket (socket.io) over ws/wss.
           connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
-          fontSrc: ["'self'", 'data:'],
+          fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
           objectSrc: ["'none'"],
           // Only force HTTPS upgrades when we actually serve HTTPS.
           upgradeInsecureRequests: httpsMode ? [] : null,
