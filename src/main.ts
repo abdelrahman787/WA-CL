@@ -8,6 +8,8 @@ import { extractIPv4FromOrigin, ipInCidr, TAILSCALE_CIDR } from './common/utils/
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const cookieParser = require('cookie-parser') as () => (req: unknown, res: unknown, next: unknown) => void;
 
 // Configuration loading order (later sources do NOT override earlier ones):
 //   1. Process env (Docker, shell, systemd) — highest priority
@@ -67,6 +69,10 @@ STORAGE_PATH=./data/media
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Cookie parser — required for JwtStrategy's cookie extractor to read
+  // the owa_jwt cookie set by /api/auth/login.
+  app.use(cookieParser());
 
   // Enable shutdown hooks for graceful shutdown
   app.enableShutdownHooks();

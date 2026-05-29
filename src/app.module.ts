@@ -30,6 +30,8 @@ import { HooksModule } from './core/hooks';
 import { PluginsModule } from './core/plugins';
 import { PluginsApiModule } from './modules/plugins/plugins.module';
 import { ImportModule } from './modules/import/import.module';
+import { UsersModule } from './modules/users/users.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 // Only import QueueModule if explicitly enabled to avoid Redis connection errors
 const queueModules: Array<Type | DynamicModule> = [];
@@ -91,7 +93,11 @@ if (dashboardRoot) {
       useFactory: (configService: ConfigService) => ({
         type: 'sqlite' as const,
         database: configService.get<string>('database.database', './data/main.sqlite'),
-        entities: [__dirname + '/modules/auth/**/*.entity{.ts,.js}', __dirname + '/modules/audit/**/*.entity{.ts,.js}'],
+        entities: [
+          __dirname + '/modules/auth/**/*.entity{.ts,.js}',
+          __dirname + '/modules/audit/**/*.entity{.ts,.js}',
+          __dirname + '/modules/users/**/*.entity{.ts,.js}',
+        ],
         synchronize: true,
         logging: configService.get<boolean>('database.logging', false),
       }),
@@ -110,6 +116,7 @@ if (dashboardRoot) {
             __dirname + '/modules/webhook/**/*.entity{.ts,.js}',
             __dirname + '/modules/message/**/*.entity{.ts,.js}',
             __dirname + '/modules/import/**/*.entity{.ts,.js}',
+            __dirname + '/modules/chat/**/*.entity{.ts,.js}',
           ],
           migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
           logging: configService.get<boolean>('dataDatabase.logging', false),
@@ -138,12 +145,18 @@ if (dashboardRoot) {
         // SQLite: zero-config. Default to synchronize=true so the embedded
         // database "just works" on first boot without a separate migration step.
         // Users can opt out with DATABASE_SYNCHRONIZE=false to use migrations instead.
+        // SQLite default: synchronize is on UNLESS the operator explicitly
+        // sets DATABASE_SYNCHRONIZE=false (rare; only for migration-only
+        // setups). configService.get(..., true) doesn't help here because
+        // the config layer always defines the key.
+        const syncEnv = (process.env.DATABASE_SYNCHRONIZE ?? '').toLowerCase();
+        const synchronize = syncEnv !== 'false';
         return {
           ...baseConfig,
           type: 'sqlite' as const,
           database: configService.get<string>('dataDatabase.database', './data/openwa.sqlite'),
-          synchronize: configService.get<boolean>('dataDatabase.synchronize', true),
-          migrationsRun: !configService.get<boolean>('dataDatabase.synchronize', true),
+          synchronize,
+          migrationsRun: !synchronize,
         };
       },
     }),
@@ -199,6 +212,8 @@ if (dashboardRoot) {
     CatalogModule, // Phase 3: Catalog API (WhatsApp Business)
     PluginsApiModule, // Phase 5: Plugins API
     ImportModule, // WhatsApp chat archive import
+    UsersModule, // internal users (username/password + JWT)
+    ChatModule, // internal chat between users
   ],
 })
 export class AppModule {}
