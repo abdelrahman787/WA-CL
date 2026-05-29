@@ -11,6 +11,7 @@ export function Step1Upload({ update, next }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -28,30 +29,44 @@ export function Step1Upload({ update, next }: Props) {
     setFile(f);
   };
 
-  const submit = async () => {
+  /**
+   * Real multipart upload via XHR so we get a working progress event.
+   * fetch() does not expose request upload progress; XHR does.
+   */
+  const submit = () => {
     if (!file) return;
     setUploading(true);
-    try {
-      // TODO: replace JSON pointer with multipart/form-data once Multer is wired.
-      const apiKey = sessionStorage.getItem('openwa_api_key') ?? '';
-      const res = await fetch('/api/import/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
-        body: JSON.stringify({
-          filePath: file.name, // placeholder until upload pipeline ships
-          originalName: file.name,
-          size: file.size,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? 'upload failed');
-      update({ jobId: data.jobId });
-      next();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
+    setError(null);
+    setProgress(0);
+
+    const apiKey = sessionStorage.getItem('openwa_api_key') ?? '';
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/import/upload', true);
+    xhr.setRequestHeader('X-API-Key', apiKey);
+
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+    };
+
+    xhr.onload = () => {
       setUploading(false);
-    }
+      let data: { jobId?: string; message?: string } = {};
+      try { data = JSON.parse(xhr.responseText); } catch { /* keep empty */ }
+      if (xhr.status >= 200 && xhr.status < 300 && data.jobId) {
+        update({ jobId: data.jobId });
+        next();
+      } else {
+        setError(data.message ?? `upload failed (HTTP ${xhr.status})`);
+      }
+    };
+    xhr.onerror = () => {
+      setUploading(false);
+      setError('network error during upload');
+    };
+    xhr.send(fd);
   };
 
   return (
@@ -87,7 +102,16 @@ export function Step1Upload({ update, next }: Props) {
           onChange={e => accept(e.target.files?.[0] ?? null)}
         />
       </div>
+
+      {uploading && (
+        <div style={{ marginTop: '0.75rem' }}>
+          <div className="iw-progress"><span style={{ width: `${progress}%` }} /></div>
+          <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>{progress}% uploaded</p>
+        </div>
+      )}
+
       {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+
       <div className="iw-actions">
         <span />
         <button disabled={!file || uploading} onClick={submit}>
