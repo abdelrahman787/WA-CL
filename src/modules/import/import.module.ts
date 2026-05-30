@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ImportController } from './import.controller';
 import { ImportService } from './import.service';
@@ -28,6 +30,13 @@ import { ChatModule } from '../chat/chat.module';
     AuthModule,
     UsersModule,
     ChatModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (cfg: ConfigService) => ({
+        secret: cfg.get<string>('JWT_SECRET') || process.env.JWT_SECRET || 'dev-secret-change-me',
+      }),
+    }),
   ],
   controllers: [ImportController],
   providers: [

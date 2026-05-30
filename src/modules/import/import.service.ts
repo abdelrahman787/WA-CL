@@ -321,6 +321,15 @@ export class ImportService {
         const ts = dto.preserveTimestamps !== false
           ? new Date(im.originalTimestamp)
           : new Date();
+        // Hand the chat UI a URL it can use directly. We point at the
+        // imported-message media endpoint (which streams via
+        // StorageService and accepts JWT *or* API-key after the fix
+        // below) so <img>/<audio>/<video> tags load without extra
+        // plumbing. Only set this for matched media — unmatched ones
+        // surface as placeholders client-side.
+        const mediaUrl = im.mediaMatched && im.mediaStoragePath
+          ? `/api/import/jobs/${im.importJobId}/media/${im.id}`
+          : null;
         return this.chatMsgRepo.create({
           chatId: internalChat.id,
           senderId,
@@ -328,7 +337,7 @@ export class ImportService {
           body: senderId
             ? (im.textContent ?? null)
             : this.renderAnonymousBody(im),
-          mediaUrl: null, // matched media still lives in the legacy Message.metadata
+          mediaUrl,
           createdAt: ts,
         });
       });

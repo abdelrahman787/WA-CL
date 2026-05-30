@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import './ChatPage.css';
 
@@ -174,22 +174,217 @@ function MessageList({ messages, meId, users }: { messages: Message[]; meId: str
         const rtl = isRtl(m.body);
         const sender = m.senderId ? userMap.get(m.senderId)?.displayName ?? '…' : '';
         return (
-          <>
+          <Fragment key={m.id}>
             {dayDivider}
             <div
-              key={m.id}
               className={'wa-bubble ' + (isSystem ? 'system' : mine ? 'mine' : 'theirs')}
               dir={rtl ? 'rtl' : 'ltr'}
               style={rtl ? { textAlign: 'right' } : undefined}
             >
               {!isSystem && !mine && <div className="sender">{sender}</div>}
-              <div>{m.body}</div>
+              <MessageBody m={m} mine={mine} />
               <div className="ts">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
             </div>
-          </>
+          </Fragment>
         );
       })}
       <div ref={endRef} />
+    </div>
+  );
+}
+
+/**
+ * Render the body of a single message bubble. Switches between text,
+ * image, voice-note, audio, video, document, and sticker layouts the
+ * way real WhatsApp does. The `mediaUrl` is a same-origin URL exposed
+ * by the import controller (works with the JWT cookie already on the
+ * request — no extra auth plumbing needed).
+ */
+function MessageBody({ m, mine }: { m: Message; mine: boolean }) {
+  const [lightbox, setLightbox] = useState(false);
+  const url = m.mediaUrl ?? null;
+  const fileName = (() => {
+    // We don't have mediaFileName on ChatMessage today; the legacy
+    // imported-message endpoint serves with the right content-type so
+    // the browser still renders correctly. Derive a label from the URL.
+    if (!url) return null;
+    const tail = url.split('/').pop() ?? '';
+    return tail || null;
+  })();
+
+  // Imported chats with mediaUrl=null but mediaFileName came in via the
+  // text body (renderAnonymousBody / parser). Render those as a small
+  // attached-file pill so they still look like a media message.
+  if (m.type === 'image' || m.type === 'sticker') {
+    if (!url) return <MissingMediaPill body={m.body} />;
+    return (
+      <>
+        <img
+          src={url}
+          alt=""
+          onClick={() => setLightbox(true)}
+          style={{
+            maxWidth: '100%',
+            maxHeight: 320,
+            borderRadius: 6,
+            cursor: 'zoom-in',
+            display: 'block',
+          }}
+        />
+        {m.body && <div style={{ marginTop: 4 }}>{m.body}</div>}
+        {lightbox && (
+          <div
+            onClick={() => setLightbox(false)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+              display: 'grid', placeItems: 'center', zIndex: 9999, cursor: 'zoom-out',
+            }}
+          >
+            <img src={url} alt="" style={{ maxWidth: '95vw', maxHeight: '95vh' }} />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (m.type === 'voice') {
+    if (!url) return <MissingMediaPill body={m.body} />;
+    return (
+      <VoiceBubble url={url} mine={mine} />
+    );
+  }
+
+  if (m.type === 'audio') {
+    if (!url) return <MissingMediaPill body={m.body} />;
+    return (
+      <audio
+        controls
+        src={url}
+        style={{ width: 280, maxWidth: '100%' }}
+      />
+    );
+  }
+
+  if (m.type === 'video') {
+    if (!url) return <MissingMediaPill body={m.body} />;
+    return (
+      <video
+        controls
+        src={url}
+        style={{ maxWidth: '100%', maxHeight: 320, borderRadius: 6, display: 'block' }}
+      />
+    );
+  }
+
+  if (m.type === 'document') {
+    return (
+      <a
+        href={url ?? '#'}
+        download={fileName ?? undefined}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '8px 10px', background: 'rgba(0,0,0,0.06)',
+          borderRadius: 6, textDecoration: 'none', color: 'inherit',
+          minWidth: 220,
+        }}
+      >
+        <span style={{ fontSize: 24 }}>📄</span>
+        <span style={{ flex: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
+          {fileName ?? m.body ?? 'Document'}
+        </span>
+      </a>
+    );
+  }
+
+  // Plain text (or unknown type) — preserve newlines.
+  return <div style={{ whiteSpace: 'pre-wrap' }}>{m.body}</div>;
+}
+
+function MissingMediaPill({ body }: { body: string | null }) {
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '6px 10px', borderRadius: 6,
+      background: 'rgba(0,0,0,0.05)', color: '#667781',
+      fontSize: '0.85rem',
+    }}>
+      <span>⚠️</span>
+      <span>Media unavailable{body ? ` — ${body}` : ''}</span>
+    </div>
+  );
+}
+
+/**
+ * WhatsApp-style voice note: avatar circle + play/pause + a fake
+ * waveform that just shows progress. Wraps an invisible <audio>.
+ */
+function VoiceBubble({ url, mine }: { url: string; mine: boolean }) {
+  const ref = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [pct, setPct] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const a = ref.current;
+    if (!a) return;
+    const onTime = () => {
+      if (!a.duration || !isFinite(a.duration)) return;
+      setPct((a.currentTime / a.duration) * 100);
+    };
+    const onMeta = () => setDuration(a.duration || 0);
+    const onEnd = () => { setPlaying(false); setPct(0); };
+    a.addEventListener('timeupdate', onTime);
+    a.addEventListener('loadedmetadata', onMeta);
+    a.addEventListener('ended', onEnd);
+    return () => {
+      a.removeEventListener('timeupdate', onTime);
+      a.removeEventListener('loadedmetadata', onMeta);
+      a.removeEventListener('ended', onEnd);
+    };
+  }, []);
+
+  const toggle = () => {
+    const a = ref.current;
+    if (!a) return;
+    if (playing) { a.pause(); setPlaying(false); }
+    else { void a.play(); setPlaying(true); }
+  };
+
+  const mm = Math.floor(duration / 60);
+  const ss = Math.floor(duration % 60).toString().padStart(2, '0');
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      minWidth: 220, padding: '4px 8px',
+    }}>
+      <button
+        onClick={toggle}
+        style={{
+          width: 36, height: 36, borderRadius: '50%',
+          background: mine ? '#0b9d68' : '#075E54', color: '#fff',
+          border: 'none', cursor: 'pointer', fontSize: 14, display: 'grid', placeItems: 'center',
+        }}
+        aria-label={playing ? 'pause' : 'play'}
+      >
+        {playing ? '⏸' : '▶'}
+      </button>
+      <div style={{ flex: 1 }}>
+        <div style={{
+          height: 4, background: 'rgba(0,0,0,0.15)', borderRadius: 2, position: 'relative',
+        }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0,
+            width: `${pct}%`, background: mine ? '#0b9d68' : '#075E54', borderRadius: 2,
+          }} />
+        </div>
+        <div style={{ fontSize: '0.7rem', color: '#667781', marginTop: 2 }}>
+          {duration > 0 ? `${mm}:${ss}` : '— : —'}
+        </div>
+      </div>
+      <audio ref={ref} src={url} preload="metadata" style={{ display: 'none' }} />
     </div>
   );
 }

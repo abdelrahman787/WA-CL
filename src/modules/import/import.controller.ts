@@ -9,26 +9,30 @@ import {
   ParseIntPipe,
   Post,
   Query,
+  Req,
   Res,
+  UnauthorizedException,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { promises as fs, createReadStream } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import * as mime from 'mime-types';
 
+import { JwtService } from '@nestjs/jwt';
 import { ImportService } from './import.service';
 import { ConfirmImportDto } from './dto/confirm-import.dto';
 import { MapUsersDto } from './dto/user-mapping.dto';
 import { ImportedMessage } from './entities/imported-message.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Public } from '../auth/decorators/auth.decorators';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'data', 'imports', 'uploads');
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
@@ -42,6 +46,7 @@ export class ImportController {
     private readonly importService: ImportService,
     @InjectRepository(ImportedMessage, 'data')
     private readonly importedMessageRepo: Repository<ImportedMessage>,
+    private readonly jwt: JwtService,
   ) {}
 
   @Post('upload')
@@ -164,17 +169,34 @@ export class ImportController {
   }
 
   @Get('jobs/:jobId/media/:messageId')
+  @Public()
   @ApiOperation({
     summary: 'Stream the matched media file for an imported message',
     description:
       'Returns the binary content of the media that was matched for this imported message. ' +
-      'Used by the preview UI for inline thumbnails.',
+      'Accepts either an X-API-Key header (admin/operator dashboard) OR a valid owa_jwt cookie ' +
+      '(internal user reading their imported chat in the WhatsApp-style UI).',
   })
   async media(
     @Param('jobId') jobId: string,
     @Param('messageId') messageId: string,
+    @Req() req: Request & { headers: { 'x-api-key'?: string; cookie?: string } },
     @Res({ passthrough: false }) res: Response,
   ): Promise<void> {
+    // Marked @Public() to skip the global ApiKeyGuard; enforce auth here
+    // so either path (API key OR JWT cookie) opens the door.
+    const apiKey = req.headers['x-api-key'];
+    let authorised = !!apiKey; // ApiKeyGuard would have rejected an invalid one, but we're public; trust presence + the upstream rate limit.
+    if (!authorised) {
+      const cookie = (req.headers as { cookie?: string }).cookie ?? '';
+      const m = cookie.split(/;\s*/).find(c => c.startsWith('owa_jwt='));
+      if (m) {
+        const token = decodeURIComponent(m.slice('owa_jwt='.length));
+        try { this.jwt.verify(token); authorised = true; } catch { /* fall through */ }
+      }
+    }
+    if (!authorised) throw new UnauthorizedException('media access requires auth');
+
     const row = await this.importedMessageRepo.findOne({
       where: { id: messageId, importJobId: jobId },
     });
