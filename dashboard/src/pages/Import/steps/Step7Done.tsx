@@ -64,7 +64,7 @@ export function Step7Done({ state, restart }: Props) {
       <div className="iw-actions" style={{ flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
         {state.jobId && (
           <Link
-            to={`/chats/${state.jobId}`}
+            to={`/admin/chats/${state.jobId}`}
             style={{
               background: '#075E54',
               color: 'white',
@@ -76,7 +76,7 @@ export function Step7Done({ state, restart }: Props) {
             View imported chat →
           </Link>
         )}
-        <Link to="/import/history">View history</Link>
+        <Link to="/admin/import/history">View history</Link>
         <button onClick={restart}>Import another</button>
       </div>
     </>

@@ -47,7 +47,7 @@ export default function ImportHistory() {
             ))}
             {jobs.length === 0 && (
               <tr><td colSpan={5} style={{ textAlign: 'center', padding: '1.5rem', color: '#6b7280' }}>
-                No imports yet — start one from <a href="/import">/import</a>.
+                No imports yet — start one from <a href="/admin/import">Import</a>.
               </td></tr>
             )}
           </tbody>

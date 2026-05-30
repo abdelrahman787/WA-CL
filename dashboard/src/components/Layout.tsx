@@ -31,16 +31,20 @@ interface LayoutProps {
   userRole: UserRole | null;
 }
 
+// Paths are relative to the AdminShell parent route ("/admin"). NavLink
+// resolves them against the parent so "sessions" becomes "/admin/sessions".
+// Using absolute paths here would jump out of /admin into the ChatShell
+// catch-all router and cause the navigate-loop the user reported.
 const allNavItems = [
-  { to: '/', icon: LayoutDashboard, key: 'dashboard' as const, adminOnly: false },
-  { to: '/sessions', icon: Smartphone, key: 'sessions' as const, adminOnly: false },
-  { to: '/webhooks', icon: Webhook, key: 'webhooks' as const, adminOnly: false },
-  { to: '/api-keys', icon: Key, key: 'apiKeys' as const, adminOnly: true },
-  { to: '/message-tester', icon: Send, key: 'messageTester' as const, adminOnly: false },
-  { to: '/infrastructure', icon: Server, key: 'infrastructure' as const, adminOnly: false },
-  { to: '/plugins', icon: Puzzle, key: 'plugins' as const, adminOnly: true },
-  { to: '/import', icon: Upload, key: 'import' as const, adminOnly: false },
-  { to: '/logs', icon: FileText, key: 'logs' as const, adminOnly: false },
+  { to: '.', icon: LayoutDashboard, key: 'dashboard' as const, adminOnly: false, end: true },
+  { to: 'sessions', icon: Smartphone, key: 'sessions' as const, adminOnly: false },
+  { to: 'webhooks', icon: Webhook, key: 'webhooks' as const, adminOnly: false },
+  { to: 'api-keys', icon: Key, key: 'apiKeys' as const, adminOnly: true },
+  { to: 'message-tester', icon: Send, key: 'messageTester' as const, adminOnly: false },
+  { to: 'infrastructure', icon: Server, key: 'infrastructure' as const, adminOnly: false },
+  { to: 'plugins', icon: Puzzle, key: 'plugins' as const, adminOnly: true },
+  { to: 'import', icon: Upload, key: 'import' as const, adminOnly: false },
+  { to: 'logs', icon: FileText, key: 'logs' as const, adminOnly: false },
 ];
 
 const themeIcons = { light: Sun, dark: Moon, system: Monitor };
@@ -134,14 +138,14 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
         )}
 
         <nav className="sidebar-nav">
-          {navItems.map(({ to, icon: Icon, key }) => {
+          {navItems.map(({ to, icon: Icon, key, end }) => {
             const label = t(`nav.${key}`);
             return (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                end={to === '/'}
+                end={!!end}
                 onClick={handleNavClick}
                 title={isCollapsed ? label : undefined}
               >
