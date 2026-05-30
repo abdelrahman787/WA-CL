@@ -41,11 +41,11 @@ export function Step4MapUsers({ state, next }: Props) {
       });
 
     // Load existing API keys to act as the "user" directory.
-    fetch('/api/auth/api-keys', { headers: { 'X-API-Key': apiKey } })
+    fetch('/api/import/users-directory', { headers: { 'X-API-Key': apiKey } })
       .then(r => (r.ok ? r.json() : []))
-      .then((rows: Array<{ id: string; name: string; role?: string }>) => {
+      .then((rows: Array<{ id: string; username: string; displayName: string; role?: string }>) => {
         if (Array.isArray(rows)) {
-          setUsers(rows.map(r => ({ id: r.id, name: r.name, role: r.role })));
+          setUsers(rows.map(r => ({ id: r.id, name: r.displayName || r.username, role: r.role })));
         }
       })
       .catch(() => { /* directory optional */ });

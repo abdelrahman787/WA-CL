@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { promises as fs, createReadStream } from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as unzipper from 'unzipper';
 
@@ -18,37 +18,25 @@ export class ZipExtractorService {
     await fs.mkdir(destDir, { recursive: true });
     const out: string[] = [];
 
-    await new Promise<void>((resolve, reject) => {
-      const stream = createReadStream(zipFilePath)
-        .pipe(unzipper.Parse({ forceStream: true }));
-
-      stream.on('entry', (entry: unzipper.Entry) => {
-        const relPath = this.sanitize(entry.path);
-        if (!relPath) {
-          entry.autodrain();
-          return;
-        }
-        const target = path.join(destDir, relPath);
-        if (entry.type === 'Directory') {
-          fs.mkdir(target, { recursive: true })
-            .then(() => entry.autodrain())
-            .catch(reject);
-          return;
-        }
-        fs.mkdir(path.dirname(target), { recursive: true })
-          .then(() => {
-            const ws = require('fs').createWriteStream(target);
-            entry
-              .pipe(ws)
-              .on('finish', () => { out.push(target); })
-              .on('error', reject);
-          })
-          .catch(reject);
-      });
-
-      stream.on('close', () => resolve());
-      stream.on('error', reject);
-    });
+    // Random-access read via the central directory. We tried streaming
+    // (`unzipper.Parse({ forceStream: true })`) first but it silently
+    // dropped entries from archives created by the `zip` CLI on Linux —
+    // `Open.file` reliably enumerates the central directory and gives
+    // each entry as a buffer we can write out.
+    const directory = await unzipper.Open.file(zipFilePath);
+    for (const entry of directory.files) {
+      const relPath = this.sanitize(entry.path);
+      if (!relPath) continue;
+      const target = path.join(destDir, relPath);
+      if (entry.type === 'Directory') {
+        await fs.mkdir(target, { recursive: true });
+        continue;
+      }
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      const buf = await entry.buffer();
+      await fs.writeFile(target, buf);
+      out.push(target);
+    }
 
     return out;
   }

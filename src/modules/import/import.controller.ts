@@ -139,6 +139,30 @@ export class ImportController {
     return this.importService.cancel(jobId);
   }
 
+  @Get('users-directory')
+  @ApiOperation({
+    summary: 'List internal users (for the import wizard mapper)',
+    description:
+      'Convenience endpoint: the import wizard runs under the API-key ' +
+      'admin flow and needs the user directory to offer "map to existing ' +
+      'user" without a JWT cookie. Returns the same shape as /api/users.',
+  })
+  async usersDirectory() {
+    return this.importService.listUsersForDirectory();
+  }
+
+  @Get('jobs/:jobId/credentials')
+  @ApiOperation({
+    summary: 'One-time-visible credentials for users minted during this job',
+    description:
+      'Returns plaintext passwords for users that were created during ' +
+      'mapUsers(). Available only until the server restarts — capture ' +
+      'them immediately after confirm() and hand them to your operators.',
+  })
+  credentials(@Param('jobId') jobId: string) {
+    return { jobId, credentials: this.importService.getMintedCredentials(jobId) };
+  }
+
   @Get('jobs/:jobId/media/:messageId')
   @ApiOperation({
     summary: 'Stream the matched media file for an imported message',

@@ -12,8 +12,11 @@ import { ImportedMessage } from './entities/imported-message.entity';
 import { Message, MessageDirection, MessageStatus } from '../message/entities/message.entity';
 import { Session, SessionStatus } from '../session/entities/session.entity';
 import { StorageService } from '../../common/storage/storage.service';
-import { AuthService } from '../auth/auth.service';
-import { ApiKeyRole } from '../auth/entities/api-key.entity';
+import { UsersService } from '../users/users.service';
+import { ChatService } from '../chat/chat.service';
+import { Chat } from '../chat/entities/chat.entity';
+import { ChatParticipant } from '../chat/entities/chat-participant.entity';
+import { ChatMessage } from '../chat/entities/chat-message.entity';
 import { ChatParserService } from './parsers/chat-parser.service';
 import { MediaMatcherService } from './parsers/media-matcher.service';
 import { ZipExtractorService } from './extractors/zip-extractor.service';
@@ -43,6 +46,12 @@ export class ImportService {
     private readonly liveMessageRepo: Repository<Message>,
     @InjectRepository(Session, 'data')
     private readonly sessionRepo: Repository<Session>,
+    @InjectRepository(Chat, 'data')
+    private readonly chatRepo: Repository<Chat>,
+    @InjectRepository(ChatParticipant, 'data')
+    private readonly chatPartRepo: Repository<ChatParticipant>,
+    @InjectRepository(ChatMessage, 'data')
+    private readonly chatMsgRepo: Repository<ChatMessage>,
     private readonly chatParser: ChatParserService,
     private readonly mediaMatcher: MediaMatcherService,
     private readonly zip: ZipExtractorService,
@@ -50,8 +59,25 @@ export class ImportService {
     private readonly gateway: ImportGateway,
     private readonly storage: StorageService,
     private readonly config: ConfigService,
-    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+    private readonly chatService: ChatService,
   ) {}
+
+  /**
+   * One-time-visible credentials for users we mint during an import.
+   * Operators see these after confirm() and hand them out — we never
+   * store the plaintext, so this is the only chance to capture them.
+   */
+  private readonly mintedCredentials = new Map<string, Array<{ username: string; password: string; displayName: string }>>();
+
+  getMintedCredentials(jobId: string) {
+    return this.mintedCredentials.get(jobId) ?? [];
+  }
+
+  /** For the wizard's "map to existing user" picker. */
+  async listUsersForDirectory() {
+    return this.usersService.list();
+  }
 
   async createJob(file: UploadedFile, sessionId?: string): Promise<ImportJob> {
     const job = this.jobRepo.create({
@@ -173,6 +199,7 @@ export class ImportService {
   async mapUsers(jobId: string, dto: MapUsersDto): Promise<ImportJob> {
     const job = await this.findJob(jobId);
     const mapping: Record<string, string> = { ...(job.userMapping ?? {}) };
+    const minted: Array<{ username: string; password: string; displayName: string }> = [];
 
     for (const m of dto.mappings) {
       if (m.action === 'map_existing' && m.existingUserId) {
@@ -180,27 +207,30 @@ export class ImportService {
         continue;
       }
       if (m.action === 'create_new') {
-        // OpenWA's auth model is API-key-based, not username/password. We
-        // mint a VIEWER-scoped ApiKey to represent the imported participant
-        // so downstream features (chat ownership, audit) have a real id.
         const displayName = m.newUserData?.displayName || m.senderName;
+        const username = this.slugify(displayName) + '-' + uuidv4().slice(0, 4);
+        const password = this.randomPassword();
         try {
-          const { apiKey } = await this.authService.createApiKey({
-            name: `imported:${displayName}`.slice(0, 100),
-            role: ApiKeyRole.VIEWER,
+          const user = await this.usersService.createUser({
+            username,
+            displayName,
+            password,
+            role: 'operator',
           });
-          mapping[m.senderName] = apiKey.id;
+          mapping[m.senderName] = user.id;
+          minted.push({ username, password, displayName });
         } catch (err) {
           this.logger.warn(
-            `createApiKey failed for ${m.senderName}: ${(err as Error).message} — falling back to synthetic id`,
+            `createUser failed for ${m.senderName}: ${(err as Error).message} — anonymising`,
           );
-          mapping[m.senderName] = `imported-user:${uuidv4()}`;
+          mapping[m.senderName] = 'anonymous';
         }
         continue;
       }
       mapping[m.senderName] = 'anonymous';
     }
 
+    if (minted.length) this.mintedCredentials.set(jobId, minted);
     job.userMapping = mapping;
     job.status = 'mapping_users' as ImportStage;
     return this.jobRepo.save(job);
@@ -216,6 +246,12 @@ export class ImportService {
     // 1. Resolve or create a synthetic Session to host the imported chat.
     const session = await this.ensureImportSession(job, dto.sessionId);
     job.sessionId = session.id;
+
+    // 1b. Create an internal Chat (group) that maps 1:1 to this import.
+    //     Every mapped user becomes a participant so the chat appears in
+    //     their /chat sidebar. Anonymous senders are skipped here — their
+    //     messages still get written but with senderId=null (system-like).
+    const internalChat = await this.ensureInternalChatForImport(job, dto.chatTitle);
 
     // 2. Stream ImportedMessage rows into Message rows, copying media as we go.
     const chatId = `imported:${job.id}`;
@@ -269,6 +305,29 @@ export class ImportService {
         }));
       }
       await this.liveMessageRepo.save(toInsert);
+
+      // Mirror the same batch into the internal Chat so it appears in
+      // the WhatsApp-style UI. senderId is null when the participant
+      // wasn't mapped to a real user (anonymous) — those render as
+      // system messages with the original name in the body.
+      const chatMessages: ChatMessage[] = slice.map(im => {
+        const mapped = job.userMapping?.[im.originalSenderName] ?? 'anonymous';
+        const senderId = mapped !== 'anonymous' && this.isUuid(mapped) ? mapped : null;
+        const ts = dto.preserveTimestamps !== false
+          ? new Date(im.originalTimestamp)
+          : new Date();
+        return this.chatMsgRepo.create({
+          chatId: internalChat.id,
+          senderId,
+          type: this.toChatType(im.messageType),
+          body: senderId
+            ? (im.textContent ?? null)
+            : this.renderAnonymousBody(im),
+          mediaUrl: null, // matched media still lives in the legacy Message.metadata
+          createdAt: ts,
+        });
+      });
+      if (chatMessages.length) await this.chatMsgRepo.save(chatMessages);
 
       await this.messageRepo
         .createQueryBuilder()
@@ -355,6 +414,108 @@ export class ImportService {
       this.logger.warn(`could not persist media ${im.mediaStoragePath}: ${(err as Error).message}`);
       return null;
     }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Phase 3 helpers — internal Chat + Users from import
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Find-or-create the internal Chat row for this import job, with every
+   * mapped (non-anonymous) user added as a participant. Re-runs are safe:
+   * if the chat already exists we just back-fill any missing members.
+   */
+  private async ensureInternalChatForImport(job: ImportJob, chatTitleOverride?: string): Promise<Chat> {
+    let chat = await this.chatRepo.findOne({ where: { importJobId: job.id } });
+    if (!chat) {
+      chat = await this.chatRepo.save(
+        this.chatRepo.create({
+          type: 'group',
+          name: chatTitleOverride || job.chatName || `Imported chat ${job.id.slice(0, 8)}`,
+          importJobId: job.id,
+        }),
+      );
+    } else if (chatTitleOverride && chat.name !== chatTitleOverride) {
+      chat.name = chatTitleOverride;
+      await this.chatRepo.save(chat);
+    }
+
+    const mappedUserIds = Array.from(
+      new Set(
+        Object.values(job.userMapping ?? {})
+          .filter(v => v !== 'anonymous' && this.isUuid(v)),
+      ),
+    );
+    if (mappedUserIds.length === 0) return chat;
+
+    const existing = await this.chatPartRepo.find({ where: { chatId: chat.id } });
+    const have = new Set(existing.map(p => p.userId));
+    const toAdd = mappedUserIds.filter(id => !have.has(id));
+    if (toAdd.length) {
+      await this.chatPartRepo.save(
+        toAdd.map(uid => this.chatPartRepo.create({
+          chatId: chat!.id,
+          userId: uid,
+          role: 'member',
+        })),
+      );
+    }
+    return chat;
+  }
+
+  private toChatType(t: string): 'text' | 'image' | 'video' | 'audio' | 'voice' | 'document' | 'system' {
+    switch (t) {
+      case 'image':
+      case 'video':
+      case 'audio':
+      case 'voice':
+      case 'document':
+        return t;
+      case 'sticker':
+      case 'gif':
+        return 'image';
+      case 'system':
+      case 'deleted':
+      case 'omitted':
+        return 'system';
+      default:
+        return 'text';
+    }
+  }
+
+  /**
+   * For senders that weren't mapped to a real user, surface the
+   * original WhatsApp display name so the bubble still carries context
+   * (rendered as a system-style bubble client-side).
+   */
+  private renderAnonymousBody(im: ImportedMessage): string {
+    const name = im.originalSenderName || 'unknown';
+    const body = im.textContent ?? (im.mediaFileName ? `[${im.messageType}] ${im.mediaFileName}` : `[${im.messageType}]`);
+    return `${name}: ${body}`;
+  }
+
+  private isUuid(s: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  }
+
+  private slugify(name: string): string {
+    const ascii = name
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    // Fall back to "user" if the name had no ASCII letters (e.g. pure Arabic).
+    return (ascii || 'user').slice(0, 24);
+  }
+
+  private randomPassword(): string {
+    // 12 chars from a URL-safe alphabet. ~71 bits of entropy.
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    let out = '';
+    const buf = require('crypto').randomBytes(12) as Buffer;
+    for (let i = 0; i < 12; i++) out += alphabet[buf[i] % alphabet.length];
+    return out;
   }
 
   async cancel(jobId: string): Promise<void> {

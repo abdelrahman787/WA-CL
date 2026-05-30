@@ -27,7 +27,7 @@ export class UsersService implements OnModuleInit {
     const count = await this.userRepo.count();
     if (count > 0) return;
     const username = process.env.ADMIN_USERNAME?.trim() || 'admin';
-    const password = process.env.ADMIN_PASSWORD?.trim() || 'changeme';
+    const password = process.env.ADMIN_PASSWORD?.trim() || 'admin';
     const displayName = process.env.ADMIN_DISPLAY_NAME?.trim() || 'Administrator';
     await this.createUser({ username, password, displayName, role: 'admin' });
     this.logger.warn('');
@@ -35,7 +35,7 @@ export class UsersService implements OnModuleInit {
     this.logger.warn('  👤 Seeded internal admin user:');
     this.logger.warn(`     username: ${username}`);
     this.logger.warn(`     password: ${password}`);
-    this.logger.warn('  Rotate immediately from /users in the dashboard.');
+    this.logger.warn('  ⚠️  Change immediately from /admin/users in the dashboard.');
     this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     this.logger.warn('');
   }
