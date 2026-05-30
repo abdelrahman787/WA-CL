@@ -108,9 +108,14 @@ export class ImportService {
     else if (type === 'zip') files = await this.zip.extract(file.path, job.tempExtractPath);
     else throw new Error(`unsupported archive type for ${file.originalname}`);
 
-    this.emitProgress(jobId, 'parsing', 50, 'parsing _chat.txt', job);
-    const chatTxt = files.find(f => path.basename(f).toLowerCase() === '_chat.txt');
-    if (!chatTxt) throw new Error('no _chat.txt found in archive');
+    this.emitProgress(jobId, 'parsing', 50, 'locating chat transcript', job);
+    // WhatsApp names the transcript differently per platform:
+    //   - iOS export:     "_chat.txt"
+    //   - Android export: "WhatsApp Chat with <Group Name>.txt"
+    //   - Old exports:    "<chat title>.txt" at root
+    // Try in priority order; fall back to "any .txt at the archive root".
+    const chatTxt = this.findChatTranscript(files);
+    if (!chatTxt) throw new Error('no _chat.txt (or WhatsApp Chat with *.txt) found in archive');
 
     const messages = await this.chatParser.parseChat(chatTxt);
     const summary = this.chatParser.summarize(messages);
@@ -401,6 +406,14 @@ export class ImportService {
    * Copy a single imported message's media (if matched) into permanent
    * StorageService-backed storage. Returns the storage-relative path,
    * or null if there was nothing to copy.
+   *
+   * Critical side-effect: replaces `ImportedMessage.mediaStoragePath`
+   * with the absolute permanent path so the
+   * `GET /api/import/jobs/:id/media/:msg` endpoint keeps working AFTER
+   * confirm() wipes the temp extraction dir. Before this fix the
+   * column kept pointing at /tmp/openwa-imports-XXX/ which is deleted
+   * at the end of confirm — every successful import then 404'd its own
+   * media.
    */
   private async persistMedia(im: ImportedMessage, job: ImportJob): Promise<string | null> {
     if (!im.mediaStoragePath || !im.mediaMatched) return null;
@@ -409,11 +422,57 @@ export class ImportService {
       const ext = path.extname(im.mediaFileName ?? im.mediaStoragePath);
       const target = `imports/${job.id}/${im.id}${ext}`;
       await this.storage.putFile(target, data);
+
+      // Repoint the row at the permanent storage location. We resolve
+      // to an absolute on-disk path so the existing controller (which
+      // streams from `mediaStoragePath` via createReadStream) works
+      // unchanged for STORAGE_TYPE=local. For S3 the absolute path
+      // doesn't exist on this box — that's a separate follow-up.
+      const localRoot = this.config.get<string>('storage.localPath') || './data/media';
+      const absPath = path.resolve(localRoot, target);
+      await this.messageRepo.update(im.id, { mediaStoragePath: absPath });
+      im.mediaStoragePath = absPath;
+
       return target;
     } catch (err) {
       this.logger.warn(`could not persist media ${im.mediaStoragePath}: ${(err as Error).message}`);
       return null;
     }
+  }
+
+  /**
+   * Locate the chat transcript inside an extracted WhatsApp export.
+   * WhatsApp names it differently per platform:
+   *   - iOS:     `_chat.txt`
+   *   - Android: `WhatsApp Chat with <Group>.txt`
+   *   - Old:     `<Group>.txt`
+   * We try in priority order and only fall through to "any .txt at the
+   * archive root that's bigger than a handful of bytes" to avoid
+   * picking up incidental notes that ship inside some exports.
+   */
+  private findChatTranscript(files: string[]): string | null {
+    const lower = (p: string) => path.basename(p).toLowerCase();
+
+    // 1. canonical iOS name
+    let hit = files.find(f => lower(f) === '_chat.txt');
+    if (hit) return hit;
+
+    // 2. Android "WhatsApp Chat with X.txt"
+    hit = files.find(f => /^whatsapp chat with .*\.txt$/i.test(path.basename(f)));
+    if (hit) return hit;
+
+    // 3. Any other .txt at the archive root that's plausibly a chat
+    //    log (anything starting with the WhatsApp timestamp shape).
+    const candidates = files.filter(f => lower(f).endsWith('.txt'));
+    for (const f of candidates) {
+      try {
+        const head = require('fs').readFileSync(f, { encoding: 'utf8', flag: 'r' }).slice(0, 512) as string;
+        if (/^[\s‎‏]*\[?\s*\d{1,4}[\/\-.]/.test(head)) return f;
+      } catch {
+        /* unreadable — skip */
+      }
+    }
+    return null;
   }
 
   // ───────────────────────────────────────────────────────────────────────
