@@ -23,6 +23,8 @@ const ImportHistory = lazy(() => import('./pages/Import/ImportHistory'));
 const ChatViewer = lazy(() => import('./pages/Import/ChatViewer'));
 const ChatPage = lazy(() => import('./pages/Chat/ChatPage'));
 const Users = lazy(() => import('./pages/Users'));
+const AdminChats = lazy(() => import('./pages/AdminChats'));
+const AdminChatMessages = lazy(() => import('./pages/AdminChatMessages'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,8 +123,50 @@ function ChatShell() {
   if (!user) {
     return <Suspense fallback={loadingFallback}><InternalLogin onLogin={setUser} /></Suspense>;
   }
-  return <Suspense fallback={loadingFallback}><ChatPage /></Suspense>;
+  const isAdmin = user.role === 'admin';
+  return (
+    <Suspense fallback={loadingFallback}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        {isAdmin && (
+          <nav style={{
+            display: 'flex', gap: '0.5rem', padding: '0.5rem 1rem',
+            background: '#075E54', color: '#fff',
+          }}>
+            <strong style={{ marginRight: 'auto' }}>OpenWA · {user.displayName}</strong>
+            <a href="/" style={navLink}>Chat</a>
+            <a href="/admin-users" style={navLink}>Users</a>
+            <a href="/admin-chats" style={navLink}>All chats</a>
+            <a href="/admin" style={navLink} title="Sessions, webhooks, imports, …">Sessions / Imports</a>
+            <button
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+                sessionStorage.removeItem('owa_user');
+                setUser(null);
+              }}
+              style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 4, padding: '0.2rem 0.6rem' }}
+            >
+              Logout
+            </button>
+          </nav>
+        )}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <Routes>
+            <Route path="/" element={<ChatPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/admin-users" element={isAdmin ? <Users /> : <ChatPage />} />
+            <Route path="/admin-chats" element={isAdmin ? <AdminChats /> : <ChatPage />} />
+            <Route path="/admin/chats/:chatId/messages" element={isAdmin ? <AdminChatMessages /> : <ChatPage />} />
+          </Routes>
+        </div>
+      </div>
+    </Suspense>
+  );
 }
+
+const navLink: React.CSSProperties = {
+  color: '#fff', textDecoration: 'none', padding: '0.25rem 0.6rem',
+  borderRadius: 4, fontSize: '0.85rem',
+};
 
 function App() {
   return (
@@ -132,13 +176,11 @@ function App() {
           <ToastProvider>
             <BrowserRouter>
               <Routes>
-                {/* Internal users land here */}
-                <Route path="/" element={<ChatShell />} />
-                <Route path="/chat" element={<ChatShell />} />
-                {/* Admin / API-key dashboard lives under /admin */}
+                {/* Admin / API-key dashboard (sessions, webhooks, imports, …) */}
                 <Route path="/admin/*" element={<AdminShell />} />
                 <Route path="/legacy-login" element={<AdminShell />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Everything else: internal users land here */}
+                <Route path="/*" element={<ChatShell />} />
               </Routes>
             </BrowserRouter>
           </ToastProvider>

@@ -95,6 +95,65 @@ export class ChatService {
     return p;
   }
 
+  /**
+   * Like assertMember, but admins are always allowed through. Used by
+   * read endpoints (list messages, get chat) so admins can audit any
+   * chat without being a participant.
+   */
+  async assertMemberOrAdmin(chatId: string, userId: string, role: string): Promise<void> {
+    if (role === 'admin') {
+      // Verify the chat exists; we don't need a participant row.
+      const chat = await this.chatRepo.findOne({ where: { id: chatId } });
+      if (!chat) throw new NotFoundException('chat not found');
+      return;
+    }
+    await this.assertMember(chatId, userId);
+  }
+
+  /** Admin-only: every chat in the system. */
+  async listAllChats() {
+    const chats = await this.chatRepo.find({ order: { updatedAt: 'DESC' } });
+    return Promise.all(chats.map(async chat => {
+      const last = await this.msgRepo.findOne({ where: { chatId: chat.id }, order: { createdAt: 'DESC' } });
+      const participantCount = await this.partRepo.count({ where: { chatId: chat.id } });
+      return { ...chat, lastMessage: last, participantCount };
+    }));
+  }
+
+  async addParticipants(chatId: string, userIds: string[]): Promise<ChatParticipant[]> {
+    const chat = await this.findChat(chatId);
+    if (chat.type === 'direct') {
+      throw new BadRequestException('cannot add participants to a direct chat');
+    }
+    const existing = await this.partRepo.find({ where: { chatId } });
+    const have = new Set(existing.map(p => p.userId));
+    const fresh = Array.from(new Set(userIds)).filter(id => !have.has(id));
+    if (fresh.length === 0) return [];
+    return this.partRepo.save(
+      fresh.map(uid => this.partRepo.create({ chatId, userId: uid, role: 'member' })),
+    );
+  }
+
+  async removeParticipant(chatId: string, userId: string): Promise<void> {
+    const chat = await this.findChat(chatId);
+    if (chat.type === 'direct') {
+      throw new BadRequestException('cannot remove participants from a direct chat');
+    }
+    await this.partRepo.delete({ chatId, userId });
+  }
+
+  async deleteChat(chatId: string): Promise<void> {
+    await this.msgRepo.delete({ chatId });
+    await this.partRepo.delete({ chatId });
+    await this.chatRepo.delete({ id: chatId });
+  }
+
+  async deleteMessage(messageId: string): Promise<void> {
+    // Soft-delete: keep the row so other clients see the deletion event,
+    // but blank the body and stamp deletedAt.
+    await this.msgRepo.update(messageId, { deletedAt: new Date(), body: null, mediaUrl: null });
+  }
+
   async listParticipants(chatId: string) {
     return this.partRepo.find({ where: { chatId } });
   }
