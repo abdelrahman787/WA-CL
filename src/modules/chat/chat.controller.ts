@@ -45,7 +45,12 @@ export class ChatController {
   @Post('chats')
   @ApiOperation({ summary: 'Create a direct or group chat' })
   async create(@Req() req: AuthedReq, @Body() dto: CreateChatDto) {
-    return this.chat.createChat(req.user.id, dto);
+    const chat = await this.chat.createChat(req.user.id, dto);
+    // Notify every participant socket so the new chat slides into
+    // their sidebar without a manual refresh.
+    const ids = Array.from(new Set([req.user.id, ...dto.participantIds]));
+    this.gateway.emitChatCreated(ids, { ...chat, participantIds: ids });
+    return { ...chat, participantIds: ids };
   }
 
   @Get('chats/:chatId')

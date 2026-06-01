@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { Chat } from './entities/chat.entity';
 import { ChatParticipant } from './entities/chat-participant.entity';
@@ -60,7 +60,18 @@ export class ChatService {
     const chatIds = rows.map(r => r.chatId);
     const chats = await this.chatRepo.findByIds(chatIds);
 
-    // Attach last message + unread count for each chat.
+    // Bulk-load every participant row for this user's chats so the
+    // client can resolve direct-chat titles (the "other user") without
+    // an extra fetch per chat.
+    const allParts = await this.partRepo.find({ where: { chatId: In(chatIds) } });
+    const byChat = new Map<string, string[]>();
+    for (const p of allParts) {
+      const list = byChat.get(p.chatId) ?? [];
+      list.push(p.userId);
+      byChat.set(p.chatId, list);
+    }
+
+    // Attach last message + unread count + participant ids for each chat.
     return Promise.all(chats.map(async chat => {
       const last = await this.msgRepo.findOne({
         where: { chatId: chat.id },
@@ -68,23 +79,18 @@ export class ChatService {
       });
       const me = rows.find(r => r.chatId === chat.id);
       const unread = me?.lastReadAt
-        ? await this.msgRepo.count({
-            where: { chatId: chat.id },
-            order: { createdAt: 'DESC' },
-          }).then(total => total - 0)  // simplistic; refined below
-        : await this.msgRepo.count({ where: { chatId: chat.id } });
-      const unreadAccurate = me?.lastReadAt
         ? await this.msgRepo
             .createQueryBuilder('m')
             .where('m.chatId = :cid', { cid: chat.id })
             .andWhere('m.createdAt > :ts', { ts: me.lastReadAt })
             .getCount()
-        : unread;
+        : await this.msgRepo.count({ where: { chatId: chat.id } });
 
       return {
         ...chat,
         lastMessage: last,
-        unreadCount: unreadAccurate,
+        unreadCount: unread,
+        participantIds: byChat.get(chat.id) ?? [],
       };
     }));
   }

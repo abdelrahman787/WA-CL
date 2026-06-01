@@ -93,6 +93,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(roomFor(chatId)).emit('message:new', { chatId, message });
   }
 
+  /**
+   * Tell every online participant of a freshly-created chat that they
+   * should add it to their sidebar. We can't broadcast to the chat
+   * room because nobody has subscribed to it yet — we walk the
+   * presence map and emit one targeted event per online user instead.
+   */
+  emitChatCreated(participantIds: string[], chat: unknown): void {
+    for (const uid of participantIds) {
+      const sockets = this.online.get(uid);
+      if (!sockets) continue;
+      for (const sid of sockets) {
+        this.server.to(sid).emit('chat:created', chat);
+      }
+    }
+  }
+
   emitRead(chatId: string, userId: string): void {
     this.server.to(roomFor(chatId)).emit('message:read', { chatId, userId, at: new Date().toISOString() });
   }

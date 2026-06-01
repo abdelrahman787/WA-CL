@@ -20,6 +20,7 @@ interface Chat {
   importJobId: string | null;
   lastMessage?: Message | null;
   unreadCount?: number;
+  participantIds?: string[];
 }
 
 interface Message {
@@ -107,23 +108,35 @@ export default function ChatPage() {
   const [headerSearch, setHeaderSearch] = useState('');
   const socketRef = useRef<Socket | null>(null);
 
+  // Mirror activeId into a ref so the socket handler (mounted once with
+  // [] deps) always reads the current value instead of the stale one
+  // captured at mount. Without this, switching chats stopped new
+  // messages from appearing in the visible thread.
+  const activeIdRef = useRef<string | null>(null);
+  useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
+
   useEffect(() => {
     const s = io('/chat', { withCredentials: true });
     socketRef.current = s;
     s.on('message:new', ({ message }: { message: Message }) => {
-      setMessages(prev => (message.chatId === activeId ? [...prev, message] : prev));
+      const current = activeIdRef.current;
+      setMessages(prev => (message.chatId === current ? [...prev, message] : prev));
       setChats(prev => prev.map(c =>
         c.id === message.chatId
           ? {
               ...c,
               lastMessage: message,
-              unreadCount: (c.unreadCount ?? 0) + (message.chatId === activeId ? 0 : 1),
+              unreadCount: (c.unreadCount ?? 0) + (message.chatId === current ? 0 : 1),
             }
           : c,
       ));
     });
+    // A brand-new chat just landed for me (someone added me, or I just
+    // created one). Slide it into the sidebar.
+    s.on('chat:created', (chat: Chat) => {
+      setChats(prev => prev.find(c => c.id === chat.id) ? prev : [chat, ...prev]);
+    });
     return () => { s.disconnect(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -131,20 +144,59 @@ export default function ChatPage() {
     void fetch('/api/users', { credentials: 'include' }).then(r => r.json()).then(setUsers);
   }, []);
 
+  // Fetching messages can land out of order if you flip between chats
+  // fast. AbortController + a captured-id check ignores any response
+  // for a chat that's no longer active.
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId) { setMessages([]); return; }
     const s = socketRef.current;
     s?.emit('subscribe', { chatId: activeId });
-    void fetch(`/api/chat/chats/${activeId}/messages?pageSize=500`, { credentials: 'include' })
+    const ctrl = new AbortController();
+    const myId = activeId;
+    void fetch(`/api/chat/chats/${myId}/messages?pageSize=500`, {
+      credentials: 'include',
+      signal: ctrl.signal,
+    })
       .then(r => r.json())
-      .then(d => setMessages(d.items));
-    void fetch(`/api/chat/chats/${activeId}/read`, { method: 'POST', credentials: 'include' });
-    setChats(prev => prev.map(c => c.id === activeId ? { ...c, unreadCount: 0 } : c));
-    return () => { s?.emit('unsubscribe', { chatId: activeId }); };
+      .then(d => { if (activeIdRef.current === myId) setMessages(d.items); })
+      .catch(() => { /* aborted or network */ });
+    void fetch(`/api/chat/chats/${myId}/read`, { method: 'POST', credentials: 'include' });
+    setChats(prev => prev.map(c => c.id === myId ? { ...c, unreadCount: 0 } : c));
+    return () => {
+      ctrl.abort();
+      s?.emit('unsubscribe', { chatId: myId });
+    };
   }, [activeId]);
 
   const activeChat = useMemo(() => chats.find(c => c.id === activeId) ?? null, [chats, activeId]);
-  const titleFor = (c: Chat) => c.name ?? (c.type === 'group' ? 'Group' : 'Chat');
+  const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
+
+  /**
+   * Resolve the visible title of a chat. For groups we use the stored
+   * name. For direct chats — which have name=null on the server — we
+   * pick the OTHER participant's displayName from the participantIds
+   * the API now returns.
+   */
+  const titleFor = (c: Chat): string => {
+    if (c.type === 'group') return c.name ?? 'Group';
+    const other = (c.participantIds ?? []).find(id => id !== me?.id);
+    if (other) {
+      const u = userMap.get(other);
+      if (u) return u.displayName;
+    }
+    return c.name ?? 'Chat';
+  };
+
+  /**
+   * Returns a stable avatar id for the chat (so direct-chat avatars
+   * follow the OTHER user's colour palette, not the chat's row id).
+   */
+  const avatarIdFor = (c: Chat): string => {
+    if (c.type === 'group') return c.id;
+    const other = (c.participantIds ?? []).find(id => id !== me?.id);
+    return other ?? c.id;
+  };
+
   const initial = (s: string) => s.slice(0, 1).toUpperCase();
 
   const send = async (body: string) => {
@@ -242,7 +294,7 @@ export default function ChatPage() {
                 className={'wa-chat-item' + (c.id === activeId ? ' active' : '')}
                 onClick={() => setActiveId(c.id)}
               >
-                <div className="wa-avatar" style={{ background: colourForId(c.id) }}>
+                <div className="wa-avatar" style={{ background: colourForId(avatarIdFor(c)) }}>
                   {initial(titleFor(c))}
                 </div>
                 <div className="wa-chat-meta">
@@ -312,7 +364,7 @@ export default function ChatPage() {
               <button className="wa-icon-btn wa-back-btn" onClick={() => setActiveId(null)} title="Back">
                 <ArrowLeft size={20} />
               </button>
-              <div className="wa-avatar sm" style={{ background: colourForId(activeChat.id) }}>
+              <div className="wa-avatar sm" style={{ background: colourForId(avatarIdFor(activeChat)) }}>
                 {initial(titleFor(activeChat))}
               </div>
               <div className="wa-main-header-info">
@@ -321,7 +373,13 @@ export default function ChatPage() {
                   {activeChat.importJobId && <FileSpreadsheet size={14} style={{ marginInlineStart: 4, color: 'var(--wa-teal-accent)' }} />}
                 </div>
                 <div className="wa-main-header-status">
-                  {activeChat.type === 'group' ? 'tap for group info' : 'online'}
+                  {activeChat.type === 'group'
+                    ? `${activeChat.participantIds?.length ?? 0} members`
+                    : (() => {
+                        const other = (activeChat.participantIds ?? []).find(id => id !== me?.id);
+                        const u = other ? userMap.get(other) : null;
+                        return u ? `@${u.username}` : 'direct chat';
+                      })()}
                 </div>
               </div>
               <div className="wa-icon-group">
@@ -453,7 +511,15 @@ function MessageBody({ m, mine }: { m: Message; mine: boolean }) {
               <a href={url} download className="wa-icon-btn dark"><Download size={20} /></a>
               <button className="wa-icon-btn dark" onClick={() => setLightbox(false)}><X size={20} /></button>
             </div>
-            <img src={url} alt="" style={{ transform: `scale(${zoom})`, transition: 'transform 120ms' }} />
+            {/* Stop click-propagation on the image itself so users can
+                pan / inspect without the click bubbling up to the
+                backdrop and closing the lightbox. */}
+            <img
+              src={url}
+              alt=""
+              onClick={e => e.stopPropagation()}
+              style={{ transform: `scale(${zoom})`, transition: 'transform 120ms', cursor: 'default' }}
+            />
           </div>
         )}
       </>
@@ -541,7 +607,9 @@ function VoiceBubble({ url, mine, isVoice }: { url: string; mine: boolean; isVoi
       <div className="wa-voice-track">
         <div className="wa-voice-bar"><div className="wa-voice-fill" style={{ width: `${pct}%` }} /></div>
         <div className="wa-voice-meta">
-          <span>{duration ? formatDuration(playing ? (duration * pct / 100) : duration) : '— : —'}</span>
+          {/* While playing or mid-track, show current time; otherwise
+              show total length — same as WhatsApp's voice note. */}
+          <span>{duration ? formatDuration(pct > 0 ? (duration * pct / 100) : duration) : '— : —'}</span>
           {isVoice && (
             <button onClick={cycleSpeed} className="wa-voice-speed">{speed}×</button>
           )}
@@ -571,6 +639,31 @@ function InputBar({ onSendText, onSendMedia, chatId }: {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Close emoji + attach popovers when clicking anywhere outside of
+  // the input-bar wrapper. Real WhatsApp does the same.
+  useEffect(() => {
+    if (!showEmoji && !showAttach) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) {
+        setShowEmoji(false);
+        setShowAttach(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [showEmoji, showAttach]);
+
+  // Auto-grow the textarea up to ~5 lines so multi-line drafts don't
+  // get clipped — same behaviour as WhatsApp Web's composer.
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  }, [body]);
 
   const submit = () => {
     if (!body.trim()) return;
@@ -661,7 +754,7 @@ function InputBar({ onSendText, onSendMedia, chatId }: {
   const EMOJI = ['😀', '😂', '🥰', '😎', '🤔', '👍', '🎉', '❤️', '🙏', '🔥', '✅', '⚠️'];
 
   return (
-    <div className="wa-input-bar-wrap">
+    <div className="wa-input-bar-wrap" ref={wrapRef}>
       {uploading && <div className="wa-upload-strip" />}
       {showEmoji && (
         <div className="wa-pop wa-pop-emoji">

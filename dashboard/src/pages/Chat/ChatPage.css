@@ -28,11 +28,16 @@
 .wa-shell {
   display: grid;
   grid-template-columns: minmax(320px, 30%) 1fr;
+  /* Use the dynamic viewport unit on mobile browsers (iOS Safari,
+     Chrome Android) so the bottom address-bar shrinking doesn't
+     hide the input. Falls back to 100vh on older browsers. */
   height: 100vh;
+  height: 100dvh;
   background: #d1d7db;
   font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   color: var(--wa-text);
   font-size: 14.5px;
+  overflow: hidden;
 }
 
 /* ──────────── icon button ──────────── */
@@ -293,14 +298,24 @@
   min-height: 60px;
   z-index: 2;
 }
-.wa-main-header-info { flex: 1; min-width: 0; }
+.wa-main-header-info { flex: 1; min-width: 0; overflow: hidden; }
 .wa-main-header-title {
   font-size: 16px;
   color: var(--wa-text);
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.wa-main-header-status { font-size: 13px; color: var(--wa-text-muted); margin-top: 1px; }
+.wa-main-header-status {
+  font-size: 13px;
+  color: var(--wa-text-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .wa-back-btn { display: none; }
 
 /* in-chat search strip */
@@ -431,9 +446,11 @@
   font-size: 11px;
   color: var(--wa-text-muted);
   margin-top: 2px;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   line-height: 15px;
-  float: right;
+  /* float to the writing-mode-aware end so Arabic (RTL) bubbles still
+     get the timestamp tucked under the right edge of the bubble. */
+  float: inline-end;
 }
 .wa-tick.read { color: var(--wa-tick-blue); }
 
@@ -790,10 +807,37 @@
 
 /* ──────────── mobile ──────────── */
 @media (max-width: 768px) {
-  .wa-shell { grid-template-columns: 1fr; }
+  .wa-shell { grid-template-columns: 1fr; font-size: 14px; }
   .wa-sidebar.has-chat-open { display: none; }
   .wa-main.no-chat-open { display: none; }
-  .wa-messages { padding: 12px 4% 8px; }
-  .wa-bubble { max-width: 80%; }
+
+  .wa-sidebar-header { padding: 8px 12px; min-height: 56px; }
+  .wa-main-header { padding: 8px 10px; min-height: 56px; gap: 8px; }
+  .wa-search-wrap { padding: 6px 10px 4px; }
+  .wa-tabs { padding: 4px 10px 6px; }
+
+  .wa-messages { padding: 10px 12px 8px; }
+  .wa-bubble { max-width: 82%; font-size: 14px; }
   .wa-back-btn { display: grid; }
+
+  /* Hide call icons on small screens — too noisy for narrow header. */
+  .wa-main-header .wa-icon-group .wa-icon-btn:nth-child(1),
+  .wa-main-header .wa-icon-group .wa-icon-btn:nth-child(2) { display: none; }
+
+  /* Empty state shrinks. */
+  .wa-empty-title { font-size: 24px; }
+  .wa-empty-illustration svg { width: 160px; height: 110px; }
+
+  /* Bigger tap targets for voice / send. */
+  .wa-send-btn { width: 44px; height: 44px; }
+  .wa-icon-btn { width: 44px; height: 44px; }
+  .wa-icon-btn.small { width: 32px; height: 32px; }
+
+  /* Pop overs anchor differently on narrow screens. */
+  .wa-pop-emoji { left: 8px; right: 8px; max-width: none; }
+  .wa-pop-attach { left: 8px; width: calc(100% - 16px); }
+
+  /* Modal full-width-ish. */
+  .wa-modal { width: 96vw; padding: 16px; gap: 12px; }
+  .wa-modal .user-pick { max-height: 50vh; }
 }
