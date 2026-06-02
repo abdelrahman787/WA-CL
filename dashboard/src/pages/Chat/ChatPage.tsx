@@ -1,12 +1,14 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import {
-  Search, Plus, MoreVertical, FileSpreadsheet,
+  Search, MoreVertical, FileSpreadsheet,
   Paperclip, Smile, Mic, Send, Trash2,
   Check, CheckCheck, Phone, Video as VideoIcon,
   Image as ImageIcon, FileText, Music, Play, Pause,
   ArrowLeft, X, Calendar, ZoomIn, ZoomOut, Download,
-  FileDown, Lock,
+  FileDown, Lock, Sun, Moon, MessageCircle, MessageSquarePlus,
+  Camera, Contact, BarChart3, Reply, Forward,
+  Star, Trash, Info, RefreshCcw, PhoneCall,
 } from 'lucide-react';
 import './ChatPage.css';
 
@@ -106,6 +108,23 @@ export default function ChatPage() {
   const [tab, setTab] = useState<'all' | 'unread' | 'groups'>('all');
   const [headerSearchOpen, setHeaderSearchOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
+  // Dark / light theme — defaults to whatever the OS prefers, with
+  // per-user persistence in localStorage so the choice survives reloads.
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('owa_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+    return 'light';
+  });
+  useEffect(() => { localStorage.setItem('owa_theme', theme); }, [theme]);
+  // Mobile bottom-nav tab.
+  const [mobileTab, setMobileTab] = useState<'chats' | 'updates' | 'calls'>('chats');
+  // Per-chat ephemeral state — typing users (resets on chat change),
+  // online presence (userId -> bool).
+  const [typingByChat, setTypingByChat] = useState<Record<string, Set<string>>>({});
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  // Right-click context menu state.
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; msg: Message } | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   // Mirror activeId into a ref so the socket handler (mounted once with
@@ -135,6 +154,27 @@ export default function ChatPage() {
     // created one). Slide it into the sidebar.
     s.on('chat:created', (chat: Chat) => {
       setChats(prev => prev.find(c => c.id === chat.id) ? prev : [chat, ...prev]);
+    });
+    // Server emits presence on every connect / disconnect of a user.
+    s.on('presence', (e: { userId: string; online: boolean }) => {
+      setOnlineUsers(prev => {
+        const next = new Set(prev);
+        if (e.online) next.add(e.userId);
+        else next.delete(e.userId);
+        return next;
+      });
+    });
+    // typing — { chatId, userId, isTyping }. We keep a per-chat set of
+    // userIds; the UI shows 'typing…' anywhere that set is non-empty.
+    s.on('typing', (e: { chatId: string; userId: string; isTyping: boolean }) => {
+      setTypingByChat(prev => {
+        const next = { ...prev };
+        const set = new Set(next[e.chatId] ?? []);
+        if (e.isTyping) set.add(e.userId);
+        else set.delete(e.userId);
+        next[e.chatId] = set;
+        return next;
+      });
     });
     return () => { s.disconnect(); };
   }, []);
@@ -241,7 +281,10 @@ export default function ChatPage() {
   }, [messages, headerSearch]);
 
   return (
-    <div className="wa-shell">
+    <div
+      className={'wa-shell' + (activeId ? ' chat-open' : '')}
+      data-theme={theme}
+    >
       {/* ═══════════════════════ SIDEBAR ═══════════════════════ */}
       <aside className={'wa-sidebar' + (activeId ? ' has-chat-open' : '')}>
         <div className="wa-sidebar-header">
@@ -252,8 +295,15 @@ export default function ChatPage() {
             <span className="wa-me-name">{me?.displayName}</span>
           </div>
           <div className="wa-icon-group">
+            <button
+              className="wa-icon-btn"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <button className="wa-icon-btn" title="New chat" onClick={() => setShowNew(true)}>
-              <Plus size={20} />
+              <MessageSquarePlus size={20} />
             </button>
             <button className="wa-icon-btn" title="Menu" onClick={async () => {
               if (!confirm('Log out?')) return;
@@ -288,14 +338,25 @@ export default function ChatPage() {
             const last = c.lastMessage;
             const hasUnread = (c.unreadCount ?? 0) > 0;
             const prev = last ? previewFor(last) : null;
+            // Direct chats show an online dot when the OTHER side is connected.
+            const otherUserId = c.type === 'direct'
+              ? (c.participantIds ?? []).find(id => id !== me?.id)
+              : undefined;
+            const isOtherOnline = !!otherUserId && onlineUsers.has(otherUserId);
+            // Anyone typing in this chat (excluding us)?
+            const typingSet = typingByChat[c.id];
+            const someoneTyping = typingSet && Array.from(typingSet).some(uid => uid !== me?.id);
             return (
               <div
                 key={c.id}
                 className={'wa-chat-item' + (c.id === activeId ? ' active' : '')}
                 onClick={() => setActiveId(c.id)}
               >
-                <div className="wa-avatar" style={{ background: colourForId(avatarIdFor(c)) }}>
-                  {initial(titleFor(c))}
+                <div className="wa-avatar-wrap">
+                  <div className="wa-avatar" style={{ background: colourForId(avatarIdFor(c)) }}>
+                    {initial(titleFor(c))}
+                  </div>
+                  {isOtherOnline && <span className="wa-presence-dot" aria-label="online" />}
                 </div>
                 <div className="wa-chat-meta">
                   <div className="wa-chat-title-row">
@@ -310,8 +371,10 @@ export default function ChatPage() {
                     )}
                   </div>
                   <div className="wa-chat-last-row">
-                    <span className="wa-chat-last">
-                      {prev ? (
+                    <span className={'wa-chat-last' + (someoneTyping ? ' typing' : '')}>
+                      {someoneTyping ? (
+                        <span>typing…</span>
+                      ) : prev ? (
                         <>
                           {prev.icon && <span className="wa-chat-prev-icon">{prev.icon}</span>}
                           <span>{prev.text}</span>
@@ -360,41 +423,62 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            <div className="wa-main-header">
-              <button className="wa-icon-btn wa-back-btn" onClick={() => setActiveId(null)} title="Back">
-                <ArrowLeft size={20} />
-              </button>
-              <div className="wa-avatar sm" style={{ background: colourForId(avatarIdFor(activeChat)) }}>
-                {initial(titleFor(activeChat))}
-              </div>
-              <div className="wa-main-header-info">
-                <div className="wa-main-header-title">
-                  {titleFor(activeChat)}
-                  {activeChat.importJobId && <FileSpreadsheet size={14} style={{ marginInlineStart: 4, color: 'var(--wa-teal-accent)' }} />}
+            {(() => {
+              const otherUserId = activeChat.type === 'direct'
+                ? (activeChat.participantIds ?? []).find(id => id !== me?.id)
+                : undefined;
+              const otherOnline = !!otherUserId && onlineUsers.has(otherUserId);
+              const typingSet = typingByChat[activeChat.id];
+              const typingNames = typingSet
+                ? Array.from(typingSet)
+                    .filter(uid => uid !== me?.id)
+                    .map(uid => userMap.get(uid)?.displayName ?? '...')
+                : [];
+              return (
+                <div className="wa-main-header">
+                  <button className="wa-icon-btn wa-back-btn" onClick={() => setActiveId(null)} title="Back">
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div className="wa-avatar-wrap sm">
+                    <div className="wa-avatar sm" style={{ background: colourForId(avatarIdFor(activeChat)) }}>
+                      {initial(titleFor(activeChat))}
+                    </div>
+                    {otherOnline && activeChat.type === 'direct' && <span className="wa-presence-dot" />}
+                  </div>
+                  <div className="wa-main-header-info">
+                    <div className="wa-main-header-title">
+                      {titleFor(activeChat)}
+                      {activeChat.importJobId && <FileSpreadsheet size={14} style={{ marginInlineStart: 4, color: 'var(--wa-teal-accent)' }} />}
+                    </div>
+                    <div className={'wa-main-header-status' + (typingNames.length > 0 ? ' typing' : '')}>
+                      {typingNames.length > 0
+                        ? (activeChat.type === 'group'
+                            ? `${typingNames.join(', ')} typing…`
+                            : 'typing…')
+                        : activeChat.type === 'group'
+                          ? `${activeChat.participantIds?.length ?? 0} members`
+                          : (() => {
+                              const u = otherUserId ? userMap.get(otherUserId) : null;
+                              if (!u) return 'direct chat';
+                              return otherOnline ? 'online' : `@${u.username}`;
+                            })()}
+                    </div>
+                  </div>
+                  <div className="wa-icon-group">
+                    <button className="wa-icon-btn" title="Voice call"><Phone size={18} /></button>
+                    <button className="wa-icon-btn" title="Video call"><VideoIcon size={18} /></button>
+                    <button
+                      className={'wa-icon-btn' + (headerSearchOpen ? ' active' : '')}
+                      title="Search in chat"
+                      onClick={() => { setHeaderSearchOpen(s => !s); if (headerSearchOpen) setHeaderSearch(''); }}
+                    >
+                      <Search size={18} />
+                    </button>
+                    <button className="wa-icon-btn" title="More"><MoreVertical size={20} /></button>
+                  </div>
                 </div>
-                <div className="wa-main-header-status">
-                  {activeChat.type === 'group'
-                    ? `${activeChat.participantIds?.length ?? 0} members`
-                    : (() => {
-                        const other = (activeChat.participantIds ?? []).find(id => id !== me?.id);
-                        const u = other ? userMap.get(other) : null;
-                        return u ? `@${u.username}` : 'direct chat';
-                      })()}
-                </div>
-              </div>
-              <div className="wa-icon-group">
-                <button className="wa-icon-btn" title="Voice call"><Phone size={18} /></button>
-                <button className="wa-icon-btn" title="Video call"><VideoIcon size={18} /></button>
-                <button
-                  className={'wa-icon-btn' + (headerSearchOpen ? ' active' : '')}
-                  title="Search in chat"
-                  onClick={() => { setHeaderSearchOpen(s => !s); if (headerSearchOpen) setHeaderSearch(''); }}
-                >
-                  <Search size={18} />
-                </button>
-                <button className="wa-icon-btn" title="More"><MoreVertical size={20} /></button>
-              </div>
-            </div>
+              );
+            })()}
 
             {headerSearchOpen && (
               <div className="wa-chat-search-strip">
@@ -412,11 +496,63 @@ export default function ChatPage() {
               </div>
             )}
 
-            <MessageList messages={visibleMessages} meId={me?.id ?? ''} users={users} />
-            <InputBar onSendText={send} onSendMedia={sendMedia} chatId={activeId!} />
+            <MessageList
+              messages={visibleMessages}
+              meId={me?.id ?? ''}
+              users={users}
+              typingNames={(() => {
+                const s = typingByChat[activeChat.id];
+                if (!s) return [];
+                return Array.from(s)
+                  .filter(uid => uid !== me?.id)
+                  .map(uid => userMap.get(uid)?.displayName ?? '...');
+              })()}
+              onContextMessage={(e, msg) => {
+                e.preventDefault();
+                setCtxMenu({ x: e.clientX, y: e.clientY, msg });
+              }}
+            />
+            <InputBar
+              onSendText={send}
+              onSendMedia={sendMedia}
+              chatId={activeId!}
+              onTypingChange={isTyping => socketRef.current?.emit('typing', { chatId: activeId, isTyping })}
+            />
           </>
         )}
       </section>
+
+      {/* Mobile FAB — only visible on small screens via CSS @media */}
+      <button className="wa-fab" title="New chat" onClick={() => setShowNew(true)}>
+        <MessageSquarePlus size={26} />
+      </button>
+
+      {/* Mobile bottom-nav — only visible on small screens via CSS @media */}
+      <nav className="wa-bottom-nav">
+        <button className={mobileTab === 'chats' ? 'active' : ''} onClick={() => setMobileTab('chats')}>
+          <MessageCircle size={22} />
+          <span>Chats</span>
+        </button>
+        <button className={mobileTab === 'updates' ? 'active' : ''} onClick={() => { setMobileTab('updates'); alert('Status updates are not yet supported.'); }}>
+          <RefreshCcw size={22} />
+          <span>Updates</span>
+        </button>
+        <button className={mobileTab === 'calls' ? 'active' : ''} onClick={() => { setMobileTab('calls'); alert('Calls are not yet supported.'); }}>
+          <PhoneCall size={22} />
+          <span>Calls</span>
+        </button>
+      </nav>
+
+      {/* Right-click context menu on a message bubble */}
+      {ctxMenu && (
+        <ContextMenuPortal
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          msg={ctxMenu.msg}
+          mine={ctxMenu.msg.senderId === me?.id}
+          onClose={() => setCtxMenu(null)}
+        />
+      )}
 
       {showNew && (
         <NewChatModal
@@ -435,7 +571,15 @@ export default function ChatPage() {
 
 /* ═══════════════════════ Message list ═══════════════════════ */
 
-function MessageList({ messages, meId, users }: { messages: Message[]; meId: string; users: User[] }) {
+function MessageList({
+  messages, meId, users, typingNames, onContextMessage,
+}: {
+  messages: Message[];
+  meId: string;
+  users: User[];
+  typingNames: string[];
+  onContextMessage: (e: React.MouseEvent, msg: Message) => void;
+}) {
   const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
   let lastDay = '';
   let lastSender = '';
@@ -466,7 +610,11 @@ function MessageList({ messages, meId, users }: { messages: Message[]; meId: str
             {isSystem ? (
               <div className="wa-bubble system">{m.body}</div>
             ) : (
-              <div className={'wa-bubble ' + (mine ? 'mine' : 'theirs')} dir={rtl ? 'rtl' : 'ltr'}>
+              <div
+                className={'wa-bubble ' + (mine ? 'mine' : 'theirs')}
+                dir={rtl ? 'rtl' : 'ltr'}
+                onContextMenu={e => onContextMessage(e, m)}
+              >
                 {showSender && (
                   <div className="wa-sender" style={{ color: colourForId(m.senderId ?? '') }}>
                     {sender}
@@ -483,6 +631,11 @@ function MessageList({ messages, meId, users }: { messages: Message[]; meId: str
           </Fragment>
         );
       })}
+      {typingNames.length > 0 && (
+        <div className="wa-typing-bubble" title={`${typingNames.join(', ')} typing…`}>
+          <span /><span /><span />
+        </div>
+      )}
       <div ref={endRef} />
     </div>
   );
@@ -622,10 +775,11 @@ function VoiceBubble({ url, mine, isVoice }: { url: string; mine: boolean; isVoi
 
 /* ═══════════════════════ Input bar w/ recording ═══════════════════════ */
 
-function InputBar({ onSendText, onSendMedia, chatId }: {
+function InputBar({ onSendText, onSendMedia, chatId, onTypingChange }: {
   onSendText: (body: string) => void;
   onSendMedia: (type: Message['type'], mediaUrl: string, body?: string) => void;
   chatId: string;
+  onTypingChange?: (isTyping: boolean) => void;
 }) {
   const [body, setBody] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
@@ -669,6 +823,7 @@ function InputBar({ onSendText, onSendMedia, chatId }: {
     if (!body.trim()) return;
     onSendText(body);
     setBody('');
+    setTyping(false);
     requestAnimationFrame(() => taRef.current?.focus());
   };
 
@@ -751,37 +906,71 @@ function InputBar({ onSendText, onSendMedia, chatId }: {
     streamRef.current?.getTracks().forEach(t => t.stop());
   }, [chatId]);
 
-  const EMOJI = ['😀', '😂', '🥰', '😎', '🤔', '👍', '🎉', '❤️', '🙏', '🔥', '✅', '⚠️'];
+  // Typing broadcast — debounced. We fire `isTyping: true` on first
+  // keystroke and `false` either 2 seconds after the LAST keystroke or
+  // when the textarea empties / the message is sent. Without the debounce
+  // we'd flood the socket on every character.
+  const typingActiveRef = useRef(false);
+  const typingTimerRef = useRef<number | null>(null);
+  const setTyping = (active: boolean) => {
+    if (typingActiveRef.current === active) return;
+    typingActiveRef.current = active;
+    onTypingChange?.(active);
+  };
+  const noteKeystroke = () => {
+    setTyping(true);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = window.setTimeout(() => setTyping(false), 2000);
+  };
+  // Reset typing state when leaving the chat.
+  useEffect(() => () => {
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    setTyping(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
 
   return (
     <div className="wa-input-bar-wrap" ref={wrapRef}>
       {uploading && <div className="wa-upload-strip" />}
       {showEmoji && (
-        <div className="wa-pop wa-pop-emoji">
-          {EMOJI.map(e => (
-            <button key={e} onClick={() => { setBody(b => b + e); setShowEmoji(false); }}>{e}</button>
-          ))}
-        </div>
+        <CategorisedEmojiPicker onPick={ch => { setBody(b => b + ch); }} />
       )}
       {showAttach && (
         <div className="wa-pop wa-pop-attach">
-          <button onClick={() => fileInputRef.current?.click()}>
-            <ImageIcon size={16} /> <span>Photo / Video</span>
-          </button>
-          <button onClick={() => {
-            const i = document.createElement('input'); i.type = 'file'; i.accept = 'audio/*';
-            i.onchange = (e: any) => onPickFile(e, 'audio');
-            i.click();
-          }}>
-            <Music size={16} /> <span>Audio</span>
-          </button>
-          <button onClick={() => {
-            const i = document.createElement('input'); i.type = 'file';
-            i.onchange = (e: any) => onPickFile(e, 'document');
-            i.click();
-          }}>
-            <FileText size={16} /> <span>Document</span>
-          </button>
+          <div className="wa-attach-grid">
+            <button onClick={() => fileInputRef.current?.click()}>
+              <div className="attach-circle" style={{ background: '#bf59cf' }}><ImageIcon size={20} /></div>
+              <span>Photo</span>
+            </button>
+            <button onClick={() => fileInputRef.current?.click()}>
+              <div className="attach-circle" style={{ background: '#0095f6' }}><Camera size={20} /></div>
+              <span>Camera</span>
+            </button>
+            <button onClick={() => {
+              const i = document.createElement('input'); i.type = 'file'; i.accept = 'audio/*';
+              i.onchange = e => onPickFile(e as unknown as React.ChangeEvent<HTMLInputElement>, 'audio');
+              i.click();
+            }}>
+              <div className="attach-circle" style={{ background: '#f59e0b' }}><Music size={20} /></div>
+              <span>Audio</span>
+            </button>
+            <button onClick={() => {
+              const i = document.createElement('input'); i.type = 'file';
+              i.onchange = e => onPickFile(e as unknown as React.ChangeEvent<HTMLInputElement>, 'document');
+              i.click();
+            }}>
+              <div className="attach-circle" style={{ background: '#5e72e4' }}><FileText size={20} /></div>
+              <span>Document</span>
+            </button>
+            <button onClick={() => alert('Contacts are not yet supported.')}>
+              <div className="attach-circle" style={{ background: '#0ea5e9' }}><Contact size={20} /></div>
+              <span>Contact</span>
+            </button>
+            <button onClick={() => alert('Polls are not yet supported.')}>
+              <div className="attach-circle" style={{ background: '#fbbf24' }}><BarChart3 size={20} /></div>
+              <span>Poll</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -815,7 +1004,12 @@ function InputBar({ onSendText, onSendMedia, chatId }: {
               rows={1}
               placeholder={uploading ? 'Uploading…' : 'Type a message'}
               value={body}
-              onChange={e => setBody(e.target.value)}
+              onChange={e => {
+                const v = e.target.value;
+                setBody(v);
+                if (v.trim()) noteKeystroke();
+                else setTyping(false);
+              }}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
               disabled={uploading}
             />
@@ -843,6 +1037,99 @@ function InputBar({ onSendText, onSendMedia, chatId }: {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════ Categorised emoji picker ═══════════════════════ */
+
+/**
+ * 8 emoji categories, each capped at a workable count so the grid stays
+ * usable. Tap an emoji → it calls onPick and stays open (matches the
+ * real WhatsApp picker — users typically pick several in a row).
+ */
+const EMOJI_CATEGORIES: Array<{ tab: string; chars: string[] }> = [
+  { tab: '😀', chars: '😀 😁 😂 🤣 😃 😄 😅 😆 😉 😊 😋 😎 😍 😘 🥰 😗 😙 😚 🙂 🤗 🤩 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 🥱 😴 😌 😛 😜 😝 🤤 😒 😓 😔 😕 🙃 🤑 😲'.split(' ') },
+  { tab: '👤', chars: '👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 🖕 👇 ☝️ 👋 🤚 🖐️ ✋ 🖖 👏 🙌 🤝 🙏 ✍️ 💪 👀 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵'.split(' ') },
+  { tab: '🐶', chars: '🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🐤 🐣 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🪰 🦗 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦐 🦞 🦀 🐡 🐠 🐟 🐬'.split(' ') },
+  { tab: '🍎', chars: '🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🍆 🥑 🥦 🥒 🌶️ 🌽 🥕 🥔 🍠 🥐 🍞 🥖 🥨 🧀 🥚 🍳 🥞 🥓 🍗 🍖 🌭 🍔 🍟 🍕 🌮 🌯 🫔 🥗 🍰 🍫 🍩'.split(' ') },
+  { tab: '⚽', chars: '⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🎱 🎳 🏓 🏸 🥊 🥋 🎯 ⛳ 🎣 🤿 🎽 🛹 🛼 🛷 ⛸️ 🥌 🎿 ⛷️ 🏂 🪂 🏋️ 🤼 🤸 🤺 🏇 🏌️ 🧘 🏄 🏊 🚴 🚵 🏆 🎖️ 🏅 🥇 🥈 🥉 🎮 🎲'.split(' ') },
+  { tab: '✈️', chars: '✈️ 🚀 🚁 🚂 🚆 🚇 🚌 🚎 🚐 🚑 🚒 🚓 🚔 🚕 🚖 🚗 🚙 🚚 🚛 🚜 🛵 🏍️ 🚲 🛴 🛺 🚤 ⛵ 🚢 🚏 🚦 🗽 🌋 🗻 🏝️ 🏜️ 🏔️ ⛰️ 🌅 🌄 🌠 🎇 🎆 🌇 🌆 🏙️ 🌃 🌌'.split(' ') },
+  { tab: '💡', chars: '💡 🔦 🕯️ 📱 💻 ⌨️ 🖥️ 🖨️ 🖱️ 💾 💿 📀 📸 📷 📹 🎥 📞 ☎️ 📟 📠 📺 📻 🎙️ 🎚️ 🎛️ 🧭 ⏱️ ⏰ ⌛ ⏳ 📡 🔋 🔌 💎 💰 💸 📐 📏 ✂️ 🗝️ 🔑 🔒 🔓 🔧 🔨 🛠️ ⛏️ 🧲'.split(' ') },
+  { tab: '❤️', chars: '❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 ✅ ❌ ⭕ 🛑 ⚠️ 🚸 ☢️ ☣️ ⬆️ ⬇️ ⬅️ ➡️ 🔄 🔃 🔝 🔚 🔙 🔛 🔜 ✔️ ☑️ 🔆 🔅 ⚡ 🔔 🔕 ➕ ➖ ❓ ❗'.split(' ') },
+];
+
+function CategorisedEmojiPicker({ onPick }: { onPick: (ch: string) => void }) {
+  const [tab, setTab] = useState(0);
+  return (
+    <div className="wa-pop wa-pop-emoji">
+      <div className="wa-emoji-tabs">
+        {EMOJI_CATEGORIES.map((cat, i) => (
+          <button
+            key={i}
+            className={'wa-emoji-tab' + (i === tab ? ' active' : '')}
+            onClick={() => setTab(i)}
+            title={`Category ${i + 1}`}
+          >
+            {cat.tab}
+          </button>
+        ))}
+      </div>
+      <div className="wa-emoji-grid">
+        {EMOJI_CATEGORIES[tab].chars.map((ch, i) => (
+          <button key={`${ch}-${i}`} onClick={() => onPick(ch)} title={ch}>{ch}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════ Right-click context menu ═══════════════════════ */
+
+function ContextMenuPortal({
+  x, y, mine, msg, onClose,
+}: {
+  x: number; y: number; mine: boolean; msg: Message; onClose: () => void;
+}) {
+  // Clamp so the menu doesn't fall off-screen.
+  const left = Math.min(x, window.innerWidth - 220);
+  const top = Math.min(y, window.innerHeight - 280);
+
+  useEffect(() => {
+    const close = () => onClose();
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [onClose]);
+
+  const item = (label: string, icon: React.ReactNode, onClick?: () => void, danger?: boolean) => (
+    <button
+      className={danger ? 'danger' : ''}
+      onMouseDown={e => { e.stopPropagation(); onClick?.(); onClose(); }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+
+  const copyToClipboard = () => navigator.clipboard?.writeText(msg.body ?? '').catch(() => {});
+
+  return (
+    <div
+      className="wa-ctx-menu"
+      style={{ left, top }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      {item('Reply', <Reply size={16} />, () => alert('Reply not yet wired to backend.'))}
+      {item('Forward', <Forward size={16} />, () => alert('Forward not yet wired to backend.'))}
+      {item('Star', <Star size={16} />, () => alert('Star not yet wired to backend.'))}
+      {item('Copy', <Check size={16} />, copyToClipboard)}
+      {item('Info', <Info size={16} />, () => alert(`id: ${msg.id}\nsent: ${msg.createdAt}\ntype: ${msg.type}`))}
+      {mine && item('Delete', <Trash size={16} />, () => alert('Delete needs the chat admin endpoint or self-delete (TODO).'), true)}
     </div>
   );
 }
